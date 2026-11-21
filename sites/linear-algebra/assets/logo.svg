@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 204 147" width="408" height="294">
+  <title>LINEAR ALGEBRA — matrix mark</title>
+  <desc>Vector mark: a bracketed 3x3 matrix with one highlighted entry and an eigenvector arrow leaving it. Transparent background, white artwork.</desc>
+
+  <!-- brackets -->
+  <g fill="none" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="square">
+    <path d="M34 24 H22 V123 H34"/>
+    <path d="M130 24 H142 V123 H130"/>
+  </g>
+
+  <!-- 3x3 matrix dots -->
+  <g fill="#FFFFFF">
+    <circle cx="52" cy="46" r="4.4"/>
+    <circle cx="82" cy="46" r="4.4"/>
+    <circle cx="112" cy="46" r="4.4"/>
+    <circle cx="52" cy="73.5" r="4.4"/>
+    <circle cx="82" cy="73.5" r="4.4"/>
+    <circle cx="112" cy="73.5" r="4.4"/>
+    <circle cx="52" cy="101" r="4.4"/>
+    <circle cx="82" cy="101" r="4.4"/>
+    <circle cx="112" cy="101" r="4.4"/>
+  </g>
+
+  <!-- highlighted eigen-direction -->
+  <circle cx="112" cy="73.5" r="7.2" fill="none" stroke="#d7ab61" stroke-width="2"/>
+  <circle cx="112" cy="73.5" r="4.4" fill="#d7ab61"/>
+
+  <!-- vector arrow -->
+  <g stroke="#FFFFFF" stroke-width="2.2" fill="none" stroke-linecap="round">
+    <path d="M136 92 L188 44"/>
+    <path d="M176 41.5 L190 42.5 L189 56"/>
+  </g>
+  <circle cx="190" cy="43" r="3.2" fill="#d7ab61"/>
+</svg>

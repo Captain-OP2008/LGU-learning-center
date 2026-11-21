@@ -1,0 +1,395 @@
+/* =====================================================================
+ * data/cheatsheet.js · 微积分学习站 · 公式速查数据
+ * 共 11 组 / 307 条公式（按「代数与三角 → 极限 → 导数 → 应用 → 积分 → 积分技术
+ *   → 超越函数 → 级数 → 坐标与向量 → 多元 → 向量场与微分方程」的学习顺序）
+ * 每条 = name（名称）+ tex（LaTeX 源码）+ note（一句话白话提示：什么时候用 / 最常错在哪）
+ * 来源：各章正文「核心概念与公式」+ 旧站 339 条公式 + ch19 公式速查表，
+ *       逐条核对教材记号后重写；tex 为纯 LaTeX（不含 $$，不含 \tag 与 \begin 环境）
+ * ===================================================================== */
+CSC.registerCheat([
+
+  /* ============================ 1. 代数与三角 ============================ */
+  {
+    group: '代数与三角',
+    items: [
+      { name: '平方差', tex: 'a^2-b^2=(a-b)(a+b)', note: '看到两个平方相减就先拆，能约分或消掉根号' },
+      { name: '立方和 / 立方差', tex: 'a^3\\pm b^3=(a\\pm b)(a^2\\mp ab+b^2)', note: '三次方相加减时用，中间那项符号与前面相反' },
+      { name: '完全平方', tex: '(a\\pm b)^2=a^2\\pm 2ab+b^2', note: '展开时别漏中间的 2ab，符号跟着括号走' },
+      { name: '二项式定理', tex: '(a+b)^n=\\sum_{k=0}^{n}\\binom{n}{k}a^{n-k}b^{k}', note: '展开 (a+b)^n 时用它，系数查杨辉三角最快' },
+      { name: '根式与分数指数', tex: '\\sqrt[n]{a^m}=a^{m/n},\\qquad a^{-p}=\\frac1{a^p}', note: '根号写成指数才能用幂法则求导，负指数就是倒数' },
+      { name: '指数运算律', tex: 'a^{m}a^{n}=a^{m+n},\\quad \\frac{a^m}{a^n}=a^{m-n},\\quad (a^m)^n=a^{mn},\\quad (ab)^n=a^n b^n', note: '同底数相乘才加指数，底不同不能合并' },
+      { name: '对数运算律', tex: '\\ln(ab)=\\ln a+\\ln b,\\quad \\ln\\frac ab=\\ln a-\\ln b,\\quad \\ln a^r=r\\ln a', note: '把乘除拆成加减，求导前先拆开往往更简单' },
+      { name: '换底公式', tex: '\\log_a x=\\frac{\\ln x}{\\ln a},\\qquad a^{\\log_a x}=x', note: '计算器只有 ln 时，用它把 log 换成 ln 的比' },
+      { name: '指数对数互逆', tex: 'e^{\\ln x}=x\\ (x>0),\\qquad \\ln e^{x}=x', note: 'e 和 ln 挨在一起就抵消，但 x 必须为正' },
+      { name: '勾股恒等式', tex: '\\sin^2\\theta+\\cos^2\\theta=1', note: '化简时把 sin² 换成 1-cos²，是三角变形第一步' },
+      { name: '正割恒等式', tex: '1+\\tan^2\\theta=\\sec^2\\theta', note: '出现 1+tan² 就换 sec²，三角代换后常用' },
+      { name: '余割恒等式', tex: '1+\\cot^2\\theta=\\csc^2\\theta', note: '出现 1+cot² 就换 csc²，和正割那条成对' },
+      { name: '和角公式（正弦）', tex: '\\sin(A\\pm B)=\\sin A\\cos B\\pm\\cos A\\sin B', note: '拆开 sin(A+B) 时符号跟着走，别把顺序写反' },
+      { name: '和角公式（余弦）', tex: '\\cos(A\\pm B)=\\cos A\\cos B\\mp\\sin A\\sin B', note: '余弦拆开中间是减号，和正弦那条正好相反' },
+      { name: '和角公式（正切）', tex: '\\tan(A\\pm B)=\\frac{\\tan A\\pm\\tan B}{1\\mp\\tan A\\tan B}', note: '分母是 1 减 tan 乘积，符号与分子相反' },
+      { name: '二倍角（正弦）', tex: '\\sin2\\theta=2\\sin\\theta\\cos\\theta', note: '看到 sinθcosθ 就换成 sin2θ 的一半' },
+      { name: '二倍角（余弦）', tex: '\\cos2\\theta=\\cos^2\\theta-\\sin^2\\theta=2\\cos^2\\theta-1=1-2\\sin^2\\theta', note: '三种写法按需要挑，要降幂就用含 cos2θ 的' },
+      { name: '降幂公式（正弦）', tex: '\\sin^2\\theta=\\frac{1-\\cos2\\theta}{2}', note: '积分 sin² 之前先用它降成一次，才能直接积' },
+      { name: '降幂公式（余弦）', tex: '\\cos^2\\theta=\\frac{1+\\cos2\\theta}{2}', note: '积分 cos² 之前先用它降次，和正弦那条差个号' },
+      { name: '积化和差', tex: '\\sin A\\cos B=\\frac12\\bigl[\\sin(A+B)+\\sin(A-B)\\bigr],\\quad \\cos A\\cos B=\\frac12\\bigl[\\cos(A-B)+\\cos(A+B)\\bigr]', note: '两个三角函数相乘时，先化成加减再积分' },
+      { name: '和差化积（正弦）', tex: '\\sin A+\\sin B=2\\sin\\frac{A+B}{2}\\cos\\frac{A-B}{2}', note: '两个 sin 相加时用，化成乘积后好判正负' },
+      { name: '和差化积（余弦）', tex: '\\cos A-\\cos B=-2\\sin\\frac{A+B}{2}\\sin\\frac{A-B}{2}', note: 'cos 相减得负号，前面那个负号最容易丢' },
+      { name: '余弦定理', tex: 'c^2=a^2+b^2-2ab\\cos\\theta', note: '已知两边和夹角求第三边，或反过来求角' },
+      { name: '正弦定理', tex: '\\frac{a}{\\sin A}=\\frac{b}{\\sin B}=\\frac{c}{\\sin C}=2R', note: '已知两角一边时用它，边与对角的正弦成比例' },
+      { name: '反三角互补', tex: '\\arcsin x+\\arccos x=\\frac{\\pi}{2},\\qquad \\arctan x+\\operatorname{arccot}x=\\frac{\\pi}{2}', note: 'arcsin 和 arccos 加起来是 π/2，可直接换' },
+      { name: '双曲勾股恒等式', tex: '\\cosh^2 x-\\sinh^2 x=1,\\qquad 1-\\tanh^2 x=\\operatorname{sech}^2 x', note: '双曲函数里是减号，和圆的勾股式符号相反' },
+      { name: '双曲加法公式', tex: '\\cosh(x\\pm y)=\\cosh x\\cosh y\\pm\\sinh x\\sinh y', note: '和圆的和角公式几乎一样，只是符号不同' },
+      { name: '欧拉公式', tex: 'e^{i\\theta}=\\cos\\theta+i\\sin\\theta', note: '把指数写成 cos 加 i sin，乘法就变成转角相加' },
+      { name: '绝对值三角不等式', tex: '\\lvert a+b\\rvert\\le\\lvert a\\rvert+\\lvert b\\rvert,\\qquad \\bigl\\lvert\\lvert a\\rvert-\\lvert b\\rvert\\bigr\\rvert\\le\\lvert a-b\\rvert', note: '估计误差上界时用，先放大再证收敛' },
+      { name: '绝对值分段定义', tex: '\\lvert x\\rvert=x\\ (x\\ge0),\\qquad \\lvert x\\rvert=-x\\ (x\\lt 0)', note: '去绝对值前先看正负，分界点就是它等于零处' },
+      { name: '二次方程求根', tex: 'x=\\frac{-b\\pm\\sqrt{b^2-4ac}}{2a}', note: '判别式小于零就没有实根，别硬套公式' }
+    ]
+  },
+
+  /* ============================ 2. 极限与连续 ============================ */
+  {
+    group: '极限与连续',
+    items: [
+      { name: '极限四则运算', tex: '\\lim_{x\\to c}(f\\pm g)=L\\pm M,\\quad \\lim_{x\\to c}(fg)=LM,\\quad \\lim_{x\\to c}\\frac fg=\\frac LM\\ (M\\ne0)', note: '只有两个极限都存在时，才能拆开分别算' },
+      { name: '极限的幂与根', tex: '\\lim_{x\\to c}\\bigl[f(x)\\bigr]^{n}=L^{n},\\qquad \\lim_{x\\to c}\\sqrt[n]{f(x)}=\\sqrt[n]{L}', note: '先算里面的极限，再乘方或开方，根号下要非负' },
+      { name: '夹逼定理', tex: 'g(x)\\le f(x)\\le h(x),\\ \\lim_{x\\to c}g=\\lim_{x\\to c}h=L\\ \\Longrightarrow\\ \\lim_{x\\to c}f=L', note: '式子被两个趋同的量夹住时用，先找上下界' },
+      { name: '两个基本三角极限', tex: '\\lim_{\\theta\\to0}\\frac{\\sin\\theta}{\\theta}=1,\\qquad \\lim_{\\theta\\to0}\\frac{1-\\cos\\theta}{\\theta}=0', note: 'sin 除以同一个角趋于 1，角要上下一致' },
+      { name: '正弦比的一般形式', tex: '\\lim_{\\theta\\to0}\\frac{\\sin A\\theta}{\\sin B\\theta}=\\frac AB\\ (B\\ne0)', note: '分子分母的角系数直接相比，前提都趋于零' },
+      { name: 'e 的极限定义', tex: '\\lim_{x\\to\\pm\\infty}\\left(1+\\frac1x\\right)^{x}=e', note: '1 加无穷小的无穷大次方，底和指数要配好' },
+      { name: '1 的无穷次幂型', tex: '\\lim_{x\\to\\pm\\infty}\\left(1+\\frac ax\\right)^{x}=e^{a}', note: '底写成 1+a/x 后，指数乘上 a 就是结果' },
+      { name: '幂指函数极限', tex: '\\lim u^{v}=\\exp\\bigl(\\lim v\\ln u\\bigr)', note: '底和指数都带 x 时先取对数，化成乘积再算' },
+      { name: '无穷远处的有理函数', tex: '\\lim_{x\\to\\pm\\infty}\\frac{a_nx^n+\\cdots}{b_mx^m+\\cdots}=0\\ (n\\lt m),\\quad =\\frac{a_n}{b_m}\\ (n=m),\\quad =\\pm\\infty\\ (n>m)', note: '只看最高次：分母高就是 0，同次看系数比' },
+      { name: '无穷远处基本极限', tex: '\\lim_{x\\to\\pm\\infty}k=k,\\qquad \\lim_{x\\to\\pm\\infty}\\frac{1}{x}=0', note: '常数在无穷远处还是常数，1/x 才趋于零' },
+      { name: '等价无穷小（正弦）', tex: '\\sin x\\sim x\\quad(x\\to0)', note: '乘除时可以换，加减里单独换容易出错' },
+      { name: '等价无穷小（正切）', tex: '\\tan x\\sim x,\\qquad \\arcsin x\\sim x,\\qquad \\arctan x\\sim x\\quad(x\\to0)', note: 'tan、arcsin、arctan 在零附近都等价于 x' },
+      { name: '等价无穷小（余弦）', tex: '1-\\cos x\\sim\\frac{x^2}{2}\\quad(x\\to0)', note: '1-cos 是二阶小量，换成 x²/2 而不是 x' },
+      { name: '等价无穷小（对数指数）', tex: '\\ln(1+x)\\sim x,\\qquad e^{x}-1\\sim x\\quad(x\\to0)', note: '这两条都等价于 x，ln 那条要求 x 大于 -1' },
+      { name: '等价无穷小（幂）', tex: '(1+x)^{\\alpha}-1\\sim\\alpha x\\quad(x\\to0)', note: '(1+x) 的 α 次方减 1 等价于 αx，α 可为分数' },
+      { name: '数列的夹逼定理', tex: 'a_n\\le b_n\\le c_n,\\ \\lim a_n=\\lim c_n=L\\ \\Longrightarrow\\ \\lim b_n=L', note: '数列不好直接求极限时，找两个好算的夹住' },
+      { name: '几何数列极限', tex: '\\lim_{n\\to\\infty}q^{n}=0\\quad(\\lvert q\\rvert\\lt 1)', note: '公比绝对值小于 1 才趋于零，等于 1 就不行' },
+      { name: '极限存在的充要条件', tex: '\\lim_{x\\to c}f(x)=L\\iff \\lim_{x\\to c^-}f(x)=\\lim_{x\\to c^+}f(x)=L', note: '分段函数在分界点要左右极限相等才算有' },
+      { name: 'ε-δ 定义', tex: '\\forall\\varepsilon>0,\\ \\exists\\delta>0:\\ 0\\lt \\lvert x-c\\rvert\\lt \\delta\\ \\Longrightarrow\\ \\lvert f(x)-L\\rvert\\lt \\varepsilon', note: '证明极限时用，先给 ε 再倒着推出 δ' },
+      { name: '连续的定义', tex: '\\lim_{x\\to c}f(x)=f(c)', note: '极限值等于函数值，有定义、有极限、相等' },
+      { name: '连续函数四则与复合', tex: 'f,g\\ \\text{连续}\\ \\Longrightarrow\\ f\\pm g,\\ fg,\\ \\frac fg\\ (g(c)\\ne0),\\ f\\circ g\\ \\text{连续}', note: '连续函数加减乘除复合后仍连续，分母别为零' },
+      { name: '介值定理', tex: 'f\\ \\text{在}\\ [a,b]\\ \\text{连续},\\ f(a)\\ne f(b)\\ \\Longrightarrow\\ f\\ \\text{取遍两者之间的一切值}', note: '曲线从低到高必过中间每个值，可用来证有根' },
+      { name: '极值定理', tex: 'f\\ \\text{在闭区间}\\ [a,b]\\ \\text{连续}\\ \\Longrightarrow\\ f\\ \\text{在该区间取到最大值与最小值}', note: '闭区间上连续就一定有最大最小值，开区间不保证' },
+      { name: '无穷小乘有界量', tex: '\\lim_{x\\to c}\\alpha(x)=0,\\ \\lvert\\beta(x)\\rvert\\le M\\ \\Longrightarrow\\ \\lim_{x\\to c}\\alpha\\beta=0', note: '趋于零的量乘有界量仍是零，sin 和 cos 常这么用' }
+    ]
+  },
+
+  /* ============================ 3. 导数 ============================ */
+  {
+    group: '导数',
+    items: [
+      { name: '导数定义', tex: 'f\'(x)=\\lim_{h\\to0}\\frac{f(x+h)-f(x)}{h}=\\lim_{\\Delta x\\to0}\\frac{\\Delta y}{\\Delta x}', note: '题目要求按定义求导时，别直接套求导公式' },
+      { name: '点处导数', tex: 'f\'(a)=\\lim_{x\\to a}\\frac{f(x)-f(a)}{x-a}', note: '只求某一点的导数用这个写法，省算整条导函数' },
+      { name: '可导蕴含连续', tex: 'f\\ \\text{在}\\ a\\ \\text{可导}\\ \\Longrightarrow\\ f\\ \\text{在}\\ a\\ \\text{连续}', note: '连续不一定可导，尖点处就是现成的反例' },
+      { name: '常数与恒等函数', tex: '(c)\'=0,\\qquad (x)\'=1', note: '常数导数为零，x 的导数是 1，最基础的两条' },
+      { name: '幂法则', tex: '(x^{n})\'=nx^{n-1},\\qquad (x^{r})\'=rx^{r-1}', note: '指数搬到前面再减一，指数是分数也一样' },
+      { name: '和差与常数倍', tex: '(cf\\pm g)\'=cf\'\\pm g\'', note: '逐项求导，常数系数提出来不用管' },
+      { name: '乘积法则', tex: '(fg)\'=f\'g+fg\'', note: '两项相乘不能各自求导再相乘，中间是加号' },
+      { name: '商法则', tex: '\\left(\\frac fg\\right)\'=\\frac{f\'g-fg\'}{g^{2}}', note: '分子是上导下减上乘下导，顺序别反' },
+      { name: '链式法则', tex: '\\frac{dy}{dx}=\\frac{dy}{du}\\cdot\\frac{du}{dx},\\qquad (f\\circ g)\'(x)=f\'(g(x))\\,g\'(x)', note: '一层套一层时从外往里剥，别忘乘内层导数' },
+      { name: '正弦导数', tex: '(\\sin x)\'=\\cos x', note: 'sin 求导是 cos，符号为正，别和 cos 搞混' },
+      { name: '余弦导数', tex: '(\\cos x)\'=-\\sin x', note: 'cos 求导是负 sin，这个负号最容易丢' },
+      { name: '正切导数', tex: '(\\tan x)\'=\\sec^{2}x', note: 'tan 求导是 sec²，不是 sec 乘 tan' },
+      { name: '余切导数', tex: '(\\cot x)\'=-\\csc^{2}x', note: 'cot 求导带负号，结果是负 csc²' },
+      { name: '正割导数', tex: '(\\sec x)\'=\\sec x\\tan x', note: 'sec 求导是 sec 乘 tan，两个因子都要有' },
+      { name: '余割导数', tex: '(\\csc x)\'=-\\csc x\\cot x', note: 'csc 求导是负 csc cot，负号别丢' },
+      { name: '自然指数导数', tex: '(e^{x})\'=e^{x},\\qquad (e^{u})\'=e^{u}u\'', note: 'e 的 x 次方求导还是自己，复合时乘内层导' },
+      { name: '一般指数导数', tex: '(a^{x})\'=a^{x}\\ln a', note: '底数不是 e 时要多乘一个 ln a' },
+      { name: '自然对数导数', tex: '(\\ln x)\'=\\frac1x,\\qquad (\\ln\\lvert u\\rvert)\'=\\frac{u\'}{u}', note: 'ln 求导是 1/x，复合时是 u 导除以 u' },
+      { name: '一般对数导数', tex: '(\\log_a x)\'=\\frac{1}{x\\ln a}', note: '底数不是 e 时，分母多一个 ln a' },
+      { name: '反正弦导数', tex: '(\\arcsin x)\'=\\frac{1}{\\sqrt{1-x^{2}}}', note: '根号在分母，x 只能在 -1 到 1 之间' },
+      { name: '反余弦导数', tex: '(\\arccos x)\'=-\\frac{1}{\\sqrt{1-x^{2}}}', note: '和 arcsin 只差一个负号，别记混' },
+      { name: '反正切导数', tex: '(\\arctan x)\'=\\frac{1}{1+x^{2}}', note: '分母是 1 加 x²，没有根号' },
+      { name: '反余切导数', tex: '(\\operatorname{arccot}x)\'=-\\frac{1}{1+x^{2}}', note: '和 arctan 差一个负号，分母同样是 1+x²' },
+      { name: '双曲正弦与余弦导数', tex: '(\\sinh x)\'=\\cosh x,\\qquad (\\cosh x)\'=\\sinh x', note: 'sinh 和 cosh 互相求导，都不带负号' },
+      { name: '双曲正切导数', tex: '(\\tanh x)\'=\\operatorname{sech}^{2}x', note: 'tanh 求导是 sech²，和 tan 那条形式一样' },
+      { name: '反函数求导', tex: '\\left(f^{-1}\\right)\'(b)=\\frac{1}{f\'\\bigl(f^{-1}(b)\\bigr)},\\qquad \\frac{dx}{dy}=\\frac{1}{dy/dx}', note: '原函数导数的倒数，分母要代反函数的值' },
+      { name: '隐函数求导', tex: 'F(x,y)=0\\ \\Longrightarrow\\ \\frac{dy}{dx}=-\\frac{F_x}{F_y}', note: '两边同时对 x 求导，把 y 看成 x 的函数' },
+      { name: '参数方程一阶导', tex: '\\frac{dy}{dx}=\\frac{dy/dt}{dx/dt}', note: 'y 对 t 的导除以 x 对 t 的导，别写反' },
+      { name: '参数方程二阶导', tex: '\\frac{d^{2}y}{dx^{2}}=\\frac{\\dfrac{d}{dt}\\left(\\dfrac{dy}{dx}\\right)}{\\dfrac{dx}{dt}}', note: '二阶导要再对 t 求一次，再除以 dx/dt' },
+      { name: '极坐标曲线斜率', tex: '\\frac{dy}{dx}=\\frac{f\'(\\theta)\\sin\\theta+f(\\theta)\\cos\\theta}{f\'(\\theta)\\cos\\theta-f(\\theta)\\sin\\theta}\\qquad\\bigl(r=f(\\theta)\\bigr)', note: '先把 x、y 写成 θ 的函数，再按参数方程求导' },
+      { name: '线性化', tex: 'L(x)=f(a)+f\'(a)(x-a),\\qquad f(x)\\approx L(x)\\ (x\\approx a)', note: '在展开点附近用切线代替曲线，离得越远越不准' },
+      { name: '微分', tex: 'df=f\'(x)\\,dx,\\qquad \\Delta f\\approx df', note: '自变量变化很小时，用微分近似函数值的改变' },
+      { name: 'n 阶导数记号', tex: 'f^{(n)}(x)=\\frac{d^{n}y}{dx^{n}}', note: '反复求导几次就写几阶，两种记号对应着看' }
+    ]
+  },
+
+  /* ============================ 4. 导数的应用 ============================ */
+  {
+    group: '导数的应用',
+    items: [
+      { name: '最值三步法', tex: 'M=\\max\\bigl\\{f(a),\\ f(b),\\ f(c_1),\\dots,f(c_n)\\bigr\\},\\quad c_k\\ \\text{为区间内临界点}', note: '闭区间求最值要比端点和临界点，别只看驻点' },
+      { name: '费马定理', tex: 'f\\ \\text{在}\\ c\\ \\text{取局部极值且}\\ f\'(c)\\ \\text{存在}\\ \\Longrightarrow\\ f\'(c)=0', note: '极值点处导数为零，但导数为零不一定是极值' },
+      { name: '罗尔定理', tex: 'f\\ \\text{在}\\ [a,b]\\ \\text{连续},\\ (a,b)\\ \\text{可导},\\ f(a)=f(b)\\ \\Longrightarrow\\ \\exists c:\\ f\'(c)=0', note: '两端函数值相等时，中间必有一点导数为零' },
+      { name: '中值定理（MVT）', tex: '\\frac{f(b)-f(a)}{b-a}=f\'(c)\\qquad(a\\lt c\\lt b)', note: '平均变化率等于某点的瞬时变化率，先验条件' },
+      { name: '中值定理推论', tex: 'f\'(x)=0\\ \\text{在区间上处处成立}\\ \\Longrightarrow\\ f\\ \\text{为常数}', note: '导数处处为零则函数是常数，可用来证恒等式' },
+      { name: '柯西中值定理', tex: '\\frac{f(b)-f(a)}{g(b)-g(a)}=\\frac{f\'(c)}{g\'(c)}', note: '两个函数一起用，是洛必达法则的理论依据' },
+      { name: '一阶导数判别法', tex: 'f\'\\ \\text{由负变正}\\Rightarrow\\ \\text{局部极小};\\qquad f\'\\ \\text{由正变负}\\Rightarrow\\ \\text{局部极大}', note: '看导数在驻点两侧的符号变化，由负变正为极小' },
+      { name: '二阶导数判别法', tex: 'f\'(c)=0,\\ f\'\'(c)>0\\Rightarrow\\ \\text{极小};\\qquad f\'(c)=0,\\ f\'\'(c)\\lt 0\\Rightarrow\\ \\text{极大}', note: '二阶导为正开口向上是极小，为零时这招失效' },
+      { name: '单调性判定', tex: 'f\'>0\\ \\text{于区间}\\ \\Longrightarrow\\ f\\ \\text{递增};\\qquad f\'\\lt 0\\ \\text{于区间}\\ \\Longrightarrow\\ f\\ \\text{递减}', note: '导数正就递增，负就递减，先求导再定区间' },
+      { name: '凹凸性判定', tex: 'f\'\'>0\\ \\text{于区间}\\ \\Longrightarrow\\ \\text{凹向上};\\qquad f\'\'\\lt 0\\ \\Longrightarrow\\ \\text{凹向下}', note: '二阶导正为凹向上，负为凹向下，中文叫法别反' },
+      { name: '拐点判定', tex: 'f\'\'\\ \\text{在该点两侧变号}\\ \\Longleftrightarrow\\ \\text{拐点}\\ (c,f(c))', note: '二阶导变号的点才是拐点，等于零还不够' },
+      { name: '水平渐近线', tex: '\\lim_{x\\to\\pm\\infty}f(x)=L\\ \\Longrightarrow\\ y=L\\ \\text{为水平渐近线}', note: '让 x 趋于无穷，看函数值趋向哪个常数' },
+      { name: '竖直渐近线', tex: '\\lim_{x\\to a^{\\pm}}f(x)=\\pm\\infty\\ \\Longrightarrow\\ x=a\\ \\text{为竖直渐近线}', note: '分母为零且函数值爆掉的地方，先找无定义点' },
+      { name: '斜渐近线', tex: 'f(x)=mx+b+\\varepsilon(x),\\ \\varepsilon\\to0\\ \\Longrightarrow\\ y=mx+b', note: '分子次数比分母高一次才有，先做多项式除法' },
+      { name: '牛顿迭代', tex: 'x_{n+1}=x_{n}-\\frac{f(x_{n})}{f\'(x_{n})}', note: '从初值出发反复迭代，初值选不好会不收敛' },
+      { name: '相关变化率', tex: '\\frac{dA}{dt}=\\frac{dA}{dr}\\cdot\\frac{dr}{dt}\\qquad\\text{（先求导，后代值）}', note: '几个量都随时间变时，先对时间求导再代数值' },
+      { name: '线性化误差界', tex: '\\lvert f(x)-L(x)\\rvert\\le\\frac{M}{2}(x-a)^{2},\\qquad M=\\max\\lvert f\'\'\\rvert', note: '误差与二阶导最大值、距离平方成正比' },
+      { name: '曲率（平面显函数）', tex: '\\kappa(x)=\\frac{\\lvert f\'\'(x)\\rvert}{\\bigl[1+(f\'(x))^{2}\\bigr]^{3/2}}', note: '衡量曲线弯得多厉害，直线的曲率为零' }
+    ]
+  },
+
+  /* ============================ 5. 积分 ============================ */
+  {
+    group: '积分',
+    items: [
+      { name: '定积分定义（黎曼和）', tex: '\\int_a^b f(x)\\,dx=\\lim_{\\lVert P\\rVert\\to0}\\sum_{k=1}^{n}f(c_k)\\,\\Delta x_k', note: '把面积切成小矩形求和，分割越细越接近真值' },
+      { name: '等宽分割的极限形式', tex: '\\int_a^b f(x)\\,dx=\\lim_{n\\to\\infty}\\sum_{k=1}^{n}f\\left(a+k\\frac{b-a}{n}\\right)\\frac{b-a}{n}', note: '区间等分后写成求和极限，先求和再取极限' },
+      { name: '定积分的线性性质', tex: '\\int_a^b(cf\\pm g)\\,dx=c\\int_a^b f\\,dx\\pm\\int_a^b g\\,dx', note: '常数可以提到积分号外，和差能拆成两个积分' },
+      { name: '区间可加性', tex: '\\int_a^b f\\,dx+\\int_b^c f\\,dx=\\int_a^c f\\,dx', note: '中间插一个点不影响总面积，分段积分就靠它' },
+      { name: '上下限交换', tex: '\\int_b^a f\\,dx=-\\int_a^b f\\,dx,\\qquad \\int_a^a f\\,dx=0', note: '交换上下限要变号，上下限相同积分就是零' },
+      { name: '积分保序性', tex: 'f\\ge g\\ \\text{于}\\ [a,b]\\ \\Longrightarrow\\ \\int_a^b f\\,dx\\ge\\int_a^b g\\,dx', note: '函数大的积分也大，比较积分大小时常用' },
+      { name: '积分中值定理', tex: 'f\\ \\text{连续}\\ \\Longrightarrow\\ \\exists c:\\ \\int_a^b f(x)\\,dx=f(c)(b-a)', note: '连续函数的平均值一定能被某一点取到' },
+      { name: '微积分基本定理（第一部分）', tex: '\\frac{d}{dx}\\int_a^x f(t)\\,dt=f(x)', note: '变上限积分求导就是被积函数，链式法则别忘' },
+      { name: '微积分基本定理（第二部分）', tex: '\\int_a^b f(x)\\,dx=F(b)-F(a),\\qquad F\'=f', note: '先找原函数，再代上下限相减，算积分的主路' },
+      { name: '变限求导（一般形式）', tex: '\\frac{d}{dx}\\int_{u(x)}^{v(x)}f(t)\\,dt=f\\bigl(v(x)\\bigr)v\'(x)-f\\bigl(u(x)\\bigr)u\'(x)', note: '上下限都是函数时，两项相减各乘自己的导数' },
+      { name: '变限求导（下限为 x）', tex: '\\frac{d}{dx}\\int_x^{a}f(t)\\,dt=-f(x)', note: '下限带 x 时结果是负的，符号最容易写错' },
+      { name: '净变化定理', tex: 'F(b)-F(a)=\\int_a^b F\'(x)\\,dx', note: '变化率的积分等于总变化量，位移和路程不同' },
+      { name: '不定积分与 +C', tex: '\\int f(x)\\,dx=F(x)+C\\quad\\Longleftrightarrow\\quad F\'=f', note: '不定积分是一族函数，常数 C 不能漏写' },
+      { name: '换元法（不定积分）', tex: '\\int f(g(x))\\,g\'(x)\\,dx=\\int f(u)\\,du,\\qquad u=g(x)', note: '看到内层函数的导数在旁边，就整体换元' },
+      { name: '换元法（定积分换限）', tex: '\\int_a^b f(g(x))\\,g\'(x)\\,dx=\\int_{g(a)}^{g(b)}f(u)\\,du', note: '换元后上下限要跟着换，别再换回 x 代值' },
+      { name: '对称区间（偶函数）', tex: 'f\\ \\text{偶}:\\ \\int_{-a}^{a}f(x)\\,dx=2\\int_0^{a}f(x)\\,dx', note: '偶函数在对称区间上积分等于一半的两倍' },
+      { name: '对称区间（奇函数）', tex: 'f\\ \\text{奇}:\\ \\int_{-a}^{a}f(x)\\,dx=0', note: '奇函数在对称区间积分为零，先看奇偶省一半功夫' },
+      { name: '求和公式（一次）', tex: '\\sum_{k=1}^{n}k=\\frac{n(n+1)}{2}', note: '把黎曼和化成 n 的多项式时要用' },
+      { name: '求和公式（平方）', tex: '\\sum_{k=1}^{n}k^{2}=\\frac{n(n+1)(2n+1)}{6}', note: '平方和公式分母是 6，别和立方和搞混' },
+      { name: '求和公式（立方）', tex: '\\sum_{k=1}^{n}k^{3}=\\left[\\frac{n(n+1)}{2}\\right]^{2}', note: '立方和是一次和公式的平方，形式很好记' },
+      { name: '幂函数积分', tex: '\\int x^{n}\\,dx=\\frac{x^{n+1}}{n+1}+C\\quad(n\\ne-1)', note: '指数加一再除以新指数，n 等于 -1 时不能用' },
+      { name: '倒数积分', tex: '\\int\\frac{dx}{x}=\\ln\\lvert x\\rvert+C', note: '1/x 的积分是 ln 绝对值，不套幂函数公式' },
+      { name: '常数的定积分', tex: '\\int_a^b c\\,dx=c(b-a)', note: '常数函数下的面积就是长乘宽，不用求原函数' },
+      { name: 'x 的定积分', tex: '\\int_a^b x\\,dx=\\frac{b^{2}-a^{2}}{2}', note: '可以直接用梯形面积算，也能用幂法则验算' },
+      { name: '两曲线间面积', tex: 'A=\\int_a^b\\bigl[f(x)-g(x)\\bigr]\\,dx\\qquad\\text{（上减下，先求交点）}', note: '一定是上减下，先求交点确定积分区间' },
+      { name: '函数平均值', tex: '\\bar f=\\frac{1}{b-a}\\int_a^b f(x)\\,dx', note: '积分除以区间长度，就是等面积矩形的高' },
+      { name: '指数函数积分', tex: '\\int e^{x}\\,dx=e^{x}+C,\\qquad \\int a^{x}\\,dx=\\frac{a^{x}}{\\ln a}+C', note: 'e 的 x 次方积分还是自己，a 的 x 次方要除 ln a' },
+      { name: '正弦的积分', tex: '\\int\\sin x\\,dx=-\\cos x+C', note: 'sin 积分是负 cos，负号别丢' },
+      { name: '余弦的积分', tex: '\\int\\cos x\\,dx=\\sin x+C', note: 'cos 积分是 sin，和 sin 的积分只差符号' },
+      { name: '正割平方的积分', tex: '\\int\\sec^{2}x\\,dx=\\tan x+C,\\qquad \\int\\csc^{2}x\\,dx=-\\cot x+C', note: 'sec² 积分是 tan，csc² 积分是负 cot' }
+    ]
+  },
+
+  /* ============================ 6. 积分技术 ============================ */
+  {
+    group: '积分技术',
+    items: [
+      { name: '分部积分', tex: '\\int u\\,dv=uv-\\int v\\,du', note: '两类函数相乘时用，选 u 要越求导越简单' },
+      { name: '定积分分部积分', tex: '\\int_a^b u\\,dv=\\bigl[uv\\bigr]_a^b-\\int_a^b v\\,du', note: '分部后 uv 那项要代上下限，别只算积分部分' },
+      { name: '对数函数的积分', tex: '\\int\\ln x\\,dx=x\\ln x-x+C', note: '只有 ln x 时也得分部，把 dv 取成 dx' },
+      { name: '反正切的积分', tex: '\\int\\arctan x\\,dx=x\\arctan x-\\frac12\\ln(1+x^{2})+C', note: '单独出现 arctan 时用分部积分，u 取 arctan' },
+      { name: '正弦平方的积分', tex: '\\int\\sin^{2}x\\,dx=\\frac x2-\\frac{\\sin2x}{4}+C', note: '先用降幂公式化成一次，再逐项积分' },
+      { name: '余弦平方的积分', tex: '\\int\\cos^{2}x\\,dx=\\frac x2+\\frac{\\sin2x}{4}+C', note: '降幂后中间项是正的，和 sin² 差一个符号' },
+      { name: '正切的积分', tex: '\\int\\tan x\\,dx=\\ln\\lvert\\sec x\\rvert+C', note: '把 tan 写成 sin 比 cos，再用换元积分' },
+      { name: '余切的积分', tex: '\\int\\cot x\\,dx=\\ln\\lvert\\sin x\\rvert+C', note: '结果里是 ln 绝对值 sin，和 tan 那条对称' },
+      { name: '正割的积分', tex: '\\int\\sec x\\,dx=\\ln\\lvert\\sec x+\\tan x\\rvert+C', note: '结果要加绝对值，ln 里是 sec 加 tan' },
+      { name: '余割的积分', tex: '\\int\\csc x\\,dx=\\ln\\lvert\\csc x-\\cot x\\rvert+C', note: 'ln 里是 csc 减 cot，符号容易写错' },
+      { name: '正割立方的积分', tex: '\\int\\sec^{3}x\\,dx=\\frac12\\sec x\\tan x+\\frac12\\ln\\lvert\\sec x+\\tan x\\rvert+C', note: '要分部两次，最后把原积分移项解出来' },
+      { name: '三角代换（正弦型）', tex: 'x=a\\sin\\theta,\\qquad \\sqrt{a^{2}-x^{2}}=a\\cos\\theta,\\qquad dx=a\\cos\\theta\\,d\\theta', note: '含 a²-x² 的根号时用，代换后根号就没了' },
+      { name: '三角代换（正切型）', tex: 'x=a\\tan\\theta,\\qquad \\sqrt{a^{2}+x^{2}}=a\\sec\\theta,\\qquad dx=a\\sec^{2}\\theta\\,d\\theta', note: '含 a²+x² 的根号时用，注意 dx 的那个因子' },
+      { name: '三角代换（正割型）', tex: 'x=a\\sec\\theta,\\qquad \\sqrt{x^{2}-a^{2}}=a\\tan\\theta,\\qquad dx=a\\sec\\theta\\tan\\theta\\,d\\theta', note: '含 x²-a² 的根号时用，别忘了 tan 的符号' },
+      { name: '反正弦型积分', tex: '\\int\\frac{dx}{\\sqrt{a^{2}-x^{2}}}=\\arcsin\\frac xa+C', note: '分母是根号且能凑成 a²-x² 时直接用' },
+      { name: '反正切型积分', tex: '\\int\\frac{dx}{a^{2}+x^{2}}=\\frac1a\\arctan\\frac xa+C', note: '分母是平方和时用，别忘了前面的 1/a' },
+      { name: '平方差型积分', tex: '\\int\\frac{dx}{x^{2}-a^{2}}=\\frac{1}{2a}\\ln\\left\\lvert\\frac{x-a}{x+a}\\right\\rvert+C', note: '分母能分解成两个一次式时，拆部分分式或套它' },
+      { name: '根式型积分', tex: '\\int\\frac{dx}{\\sqrt{x^{2}\\pm a^{2}}}=\\ln\\left\\lvert x+\\sqrt{x^{2}\\pm a^{2}}\\right\\rvert+C', note: '结果是对数，根号里的加减号与公式一一对应' },
+      { name: '万能代换', tex: 'z=\\tan\\frac x2,\\qquad \\sin x=\\frac{2z}{1+z^{2}},\\quad \\cos x=\\frac{1-z^{2}}{1+z^{2}},\\quad dx=\\frac{2\\,dz}{1+z^{2}}', note: '三角有理式实在没招时用，计算量大但一定能算' },
+      { name: '梯形法', tex: 'T_n=\\frac h2\\bigl[f(x_0)+2f(x_1)+\\cdots+2f(x_{n-1})+f(x_n)\\bigr],\\qquad h=\\frac{b-a}{n}', note: '数值积分里最简单的一种，端点系数是 1' },
+      { name: '中点法', tex: 'M_n=h\\bigl[f(\\bar x_1)+f(\\bar x_2)+\\cdots+f(\\bar x_n)\\bigr]', note: '取每个小区间中点的高度，通常比梯形法准' },
+      { name: '辛普森法', tex: 'S_n=\\frac h3\\bigl[f(x_0)+4f(x_1)+2f(x_2)+\\cdots+4f(x_{n-1})+f(x_n)\\bigr],\\qquad n\\ \\text{为偶数}', note: '用抛物线代替直线，n 必须是偶数' },
+      { name: '梯形法误差界', tex: '\\lvert E_T\\rvert\\le\\frac{M(b-a)^{3}}{12n^{2}},\\qquad M=\\max\\lvert f\'\'\\rvert', note: '误差和 n 的平方成反比，n 加倍误差变四分之一' },
+      { name: '辛普森法误差界', tex: '\\lvert E_S\\rvert\\le\\frac{M(b-a)^{5}}{180n^{4}},\\qquad M=\\max\\lvert f^{(4)}\\rvert', note: '误差和 n 的四次方成反比，收敛比梯形法快' },
+      { name: '反常积分（无穷限）', tex: '\\int_a^{\\infty}f(x)\\,dx=\\lim_{b\\to\\infty}\\int_a^b f(x)\\,dx', note: '先换成有限上限算，再让上限趋于无穷取极限' },
+      { name: 'p 积分（无穷区间）', tex: '\\int_1^{\\infty}\\frac{dx}{x^{p}}\\ \\text{收敛}\\iff p>1', note: '无穷区间上 p 大于 1 才收敛，和级数一致' },
+      { name: 'p 积分（瑕点）', tex: '\\int_0^{1}\\frac{dx}{x^{p}}\\ \\text{收敛}\\iff p\\lt 1', note: '瑕点处 p 小于 1 才收敛，和无穷区间正好相反' },
+      { name: '反常积分比较判别法', tex: '0\\le f\\le g:\\ \\int g\\ \\text{收敛}\\Rightarrow\\int f\\ \\text{收敛};\\qquad \\int f\\ \\text{发散}\\Rightarrow\\int g\\ \\text{发散}', note: '找一个大收敛的压住它，或小发散的拖着它' },
+      { name: '反常积分极限比较', tex: '\\lim_{x\\to\\infty}\\frac{f(x)}{g(x)}=c\\ (0\\lt c\\lt \\infty)\\ \\Longrightarrow\\ \\int f\\ \\text{与}\\ \\int g\\ \\text{同敛散}', note: '和已知敛散性的函数比，极限是正有限数就同敛散' }
+    ]
+  },
+
+  /* ============================ 7. 超越函数 ============================ */
+  {
+    group: '超越函数',
+    items: [
+      { name: '自然对数的积分定义', tex: '\\ln x=\\int_1^{x}\\frac{dt}{t}\\qquad(x>0)', note: '从 1 到 x 的 1/t 面积就是 ln x，x 必须为正' },
+      { name: '对数函数的导数', tex: '\\frac{d}{dx}\\ln x=\\frac1x', note: 'ln x 求导是 1/x，这是它最要紧的性质' },
+      { name: '对数函数的积分', tex: '\\int\\frac{du}{u}=\\ln\\lvert u\\rvert+C', note: '分母是一次式时，积分就是 ln 绝对值加 C' },
+      { name: 'e 的级数定义', tex: 'e=\\sum_{n=0}^{\\infty}\\frac{1}{n!}=\\lim_{n\\to\\infty}\\left(1+\\frac1n\\right)^{n}', note: 'e 可以用阶乘倒数的和逼近，收敛得很快' },
+      { name: '指数函数的导数与积分', tex: '\\frac{d}{dx}e^{x}=e^{x},\\qquad \\int e^{x}\\,dx=e^{x}+C', note: 'e 的 x 次方求导和积分都不变，最省事' },
+      { name: '一般指数函数的导数', tex: '\\frac{d}{dx}a^{x}=a^{x}\\ln a', note: '底数不是 e 时，导数要多乘一个 ln a' },
+      { name: '一般对数函数的导数', tex: '\\frac{d}{dx}\\log_a x=\\frac{1}{x\\ln a}', note: '换底成 ln 再求导，分母会多出 ln a' },
+      { name: '洛必达法则（0/0）', tex: '\\lim_{x\\to c}\\frac{f(x)}{g(x)}=\\lim_{x\\to c}\\frac{f\'(x)}{g\'(x)}\\qquad\\left(f(c)=g(c)=0\\right)', note: '只对 0/0 型用，用前先确认是这种' },
+      { name: '洛必达法则（∞/∞）', tex: '\\lim_{x\\to c}\\frac{f(x)}{g(x)}=\\lim_{x\\to c}\\frac{f\'(x)}{g\'(x)}\\qquad\\left(f,g\\to\\pm\\infty\\right)', note: '上下都趋于无穷才能用，求导后极限要存在' },
+      { name: '0·∞ 型转化', tex: 'f\\cdot g=\\frac{f}{1/g}\\qquad\\text{或}\\qquad \\frac{g}{1/f}', note: '把一个因子放到分母上，变成 0/0 或无穷比无穷' },
+      { name: '∞−∞ 型转化', tex: 'f-g=f\\left(1-\\frac gf\\right)\\qquad\\text{或通分、有理化}', note: '先通分或提公因子，化成商的形式再用洛必达' },
+      { name: '1^∞ 型取对数', tex: 'L=\\lim f^{g}\\ \\Longrightarrow\\ \\ln L=\\lim g\\ln f', note: '底趋于 1、指数趋于无穷时，先取对数再算' },
+      { name: '反正弦的导数与积分', tex: '\\frac{d}{dx}\\arcsin x=\\frac{1}{\\sqrt{1-x^{2}}},\\qquad \\int\\frac{dx}{\\sqrt{1-x^{2}}}=\\arcsin x+C', note: '两者互为逆运算，符号和定义域都要注意' },
+      { name: '反正切的导数与积分', tex: '\\frac{d}{dx}\\arctan x=\\frac{1}{1+x^{2}},\\qquad \\int\\frac{dx}{1+x^{2}}=\\arctan x+C', note: '分母是 1+x²，积分出来就是 arctan' },
+      { name: '反正切的加法公式', tex: '\\arctan x+\\arctan y=\\arctan\\frac{x+y}{1-xy}\\qquad(xy\\lt 1)', note: '两个 arctan 相加时用，注意 xy 小于 1 的条件' },
+      { name: '双曲函数的定义', tex: '\\sinh x=\\frac{e^{x}-e^{-x}}{2},\\qquad \\cosh x=\\frac{e^{x}+e^{-x}}{2}', note: '用 e 的指数表示，性质和三角函数几乎平行' },
+      { name: '双曲函数的导数', tex: '\\frac{d}{dx}\\sinh x=\\cosh x,\\qquad \\frac{d}{dx}\\cosh x=\\sinh x', note: 'sinh 和 cosh 互相求导，都不带负号' },
+      { name: '双曲函数的积分', tex: '\\int\\sinh x\\,dx=\\cosh x+C,\\qquad \\int\\cosh x\\,dx=\\sinh x+C', note: '和求导一样互相转换，符号都是正的' },
+      { name: '反双曲正弦的导数', tex: '\\frac{d}{dx}\\operatorname{arsinh}x=\\frac{1}{\\sqrt{1+x^{2}}}', note: '分母是根号下 1+x²，和 arcsin 只差符号' },
+      { name: '反双曲正切的导数', tex: '\\frac{d}{dx}\\operatorname{artanh}x=\\frac{1}{1-x^{2}}\\qquad(\\lvert x\\rvert\\lt 1)', note: '分母是 1-x²，x 必须在 -1 到 1 之间' },
+      { name: '指数增长与衰减', tex: '\\frac{dP}{dt}=kP\\ \\Longrightarrow\\ P(t)=P_0e^{kt}', note: '变化率和当前量成正比时，解一定是指数函数' },
+      { name: '半衰期', tex: 't_{1/2}=\\frac{\\ln2}{k}', note: '衰减到一半要的时间，和初始量无关' },
+      { name: '牛顿冷却定律', tex: '\\frac{dT}{dt}=k(T-T_s)\\ \\Longrightarrow\\ T-T_s=(T_0-T_s)e^{kt}', note: '温差越大降得越快，注意温度差要取正' },
+      { name: '增长率比较', tex: '\\ln x\\ll x^{p}\\ll a^{x}\\ll x^{x}\\qquad(p>0,\\ a>1,\\ x\\to\\infty)', note: '趋于无穷时对数最慢，幂次之，指数最快' },
+      { name: '相对增长率', tex: '\\frac{1}{f}\\frac{df}{dx}=\\frac{d}{dx}\\ln f', note: '相对增长率就是 ln f 的导数，比较速度时用' }
+    ]
+  },
+
+  /* ============================ 8. 级数 ============================ */
+  {
+    group: '级数',
+    items: [
+      { name: '几何级数', tex: '\\sum_{n=0}^{\\infty}ar^{n}=\\frac{a}{1-r}\\qquad(\\lvert r\\rvert\\lt 1)', note: '公比绝对值小于 1 才收敛，和是首项除以 1 减公比' },
+      { name: '几何级数的部分和', tex: 's_n=\\frac{a(1-r^{n})}{1-r}\\qquad(r\\ne1)', note: '求前 n 项和时用，注意公比不能等于 1' },
+      { name: '调和级数', tex: '\\sum_{n=1}^{\\infty}\\frac1n\\ \\text{发散}', note: '通项趋于零却发散，说明第 n 项判别法只是必要' },
+      { name: 'p 级数', tex: '\\sum_{n=1}^{\\infty}\\frac{1}{n^{p}}\\ \\text{收敛}\\iff p>1', note: 'p 大于 1 收敛，p 等于 1 就是调和级数发散' },
+      { name: '第 n 项判别法', tex: '\\lim_{n\\to\\infty}a_n\\ne0\\ \\text{或不存在}\\ \\Longrightarrow\\ \\sum a_n\\ \\text{发散}', note: '通项不趋于零就一定发散，反之不能断定' },
+      { name: '积分判别法', tex: 'f\\ \\text{正、连续、递减},\\ f(n)=a_n\\ \\Longrightarrow\\ \\sum a_n\\ \\text{与}\\ \\int_1^{\\infty}f\\,dx\\ \\text{同敛散}', note: '通项能写成函数时，把求和换成积分判断' },
+      { name: '直接比较判别法', tex: '0\\le a_n\\le b_n:\\ \\sum b_n\\ \\text{收敛}\\Rightarrow\\sum a_n\\ \\text{收敛};\\qquad \\sum a_n\\ \\text{发散}\\Rightarrow\\sum b_n\\ \\text{发散}', note: '找大的收敛压住，或找小的发散拖着' },
+      { name: '极限比较判别法', tex: '\\lim_{n\\to\\infty}\\frac{a_n}{b_n}=c\\ (0\\lt c\\lt \\infty)\\ \\Longrightarrow\\ \\sum a_n\\ \\text{与}\\ \\sum b_n\\ \\text{同敛散}', note: '和已知级数比，极限是正有限数就同敛散' },
+      { name: '比值判别法', tex: '\\rho=\\lim_{n\\to\\infty}\\left\\lvert\\frac{a_{n+1}}{a_n}\\right\\rvert:\\ \\rho\\lt 1\\ \\text{绝对收敛},\\ \\rho>1\\ \\text{发散},\\ \\rho=1\\ \\text{失效}', note: '有阶乘或指数时最好用，等于 1 时失效' },
+      { name: '根值判别法', tex: '\\rho=\\lim_{n\\to\\infty}\\sqrt[n]{\\lvert a_n\\rvert}:\\ \\rho\\lt 1\\ \\text{绝对收敛},\\ \\rho>1\\ \\text{发散},\\ \\rho=1\\ \\text{失效}', note: '通项是 n 次方时用，等于 1 时同样失效' },
+      { name: '交错级数判别法', tex: 'u_n\\ \\text{递减},\\ \\lim u_n=0\\ \\Longrightarrow\\ \\sum_{n=1}^{\\infty}(-1)^{n+1}u_n\\ \\text{收敛}', note: '通项要递减且趋于零，两个条件都要查' },
+      { name: '交错级数误差', tex: '\\lvert s-s_n\\rvert\\le u_{n+1}', note: '用前 n 项近似时，误差不超过下一项绝对值' },
+      { name: '绝对收敛', tex: '\\sum\\lvert a_n\\rvert\\ \\text{收敛}\\ \\Longrightarrow\\ \\sum a_n\\ \\text{收敛}', note: '绝对值收敛则原级数收敛，反过来不成立' },
+      { name: '幂级数与收敛半径', tex: '\\sum_{n=0}^{\\infty}c_n(x-a)^{n},\\qquad \\lvert x-a\\rvert\\lt R\\ \\text{绝对收敛},\\ \\lvert x-a\\rvert>R\\ \\text{发散}', note: '以展开点为中心，半径内绝对收敛，外面发散' },
+      { name: '收敛半径公式', tex: 'R=\\lim_{n\\to\\infty}\\left\\lvert\\frac{c_n}{c_{n+1}}\\right\\rvert', note: '用相邻系数比的极限，注意是系数不是项' },
+      { name: '几何级数展开', tex: '\\frac{1}{1-x}=\\sum_{n=0}^{\\infty}x^{n}\\qquad(\\lvert x\\rvert\\lt 1)', note: '把函数写成幂级数最常用的起点，注意 x 范围' },
+      { name: '指数函数展开', tex: 'e^{x}=\\sum_{n=0}^{\\infty}\\frac{x^{n}}{n!}\\qquad(-\\infty\\lt x\\lt \\infty)', note: 'e 的 x 次方展开处处收敛，是求极限的好工具' },
+      { name: '正弦展开', tex: '\\sin x=\\sum_{n=0}^{\\infty}\\frac{(-1)^{n}x^{2n+1}}{(2n+1)!}\\qquad(-\\infty\\lt x\\lt \\infty)', note: '只有奇次项且正负交替，分母是阶乘' },
+      { name: '余弦展开', tex: '\\cos x=\\sum_{n=0}^{\\infty}\\frac{(-1)^{n}x^{2n}}{(2n)!}\\qquad(-\\infty\\lt x\\lt \\infty)', note: '只有偶次项，和正弦展开正好错开' },
+      { name: '对数展开', tex: '\\ln(1+x)=\\sum_{n=1}^{\\infty}\\frac{(-1)^{n-1}x^{n}}{n}\\qquad(-1\\lt x\\le1)', note: '在 x 等于 1 处收敛但只是条件收敛，端点要单看' },
+      { name: '反正切展开', tex: '\\arctan x=\\sum_{n=0}^{\\infty}\\frac{(-1)^{n}x^{2n+1}}{2n+1}\\qquad(\\lvert x\\rvert\\le1)', note: '在正负 1 处也收敛，可用来算 π 的近似值' },
+      { name: '二项级数', tex: '(1+x)^{k}=1+\\sum_{n=1}^{\\infty}\\binom{k}{n}x^{n}\\qquad(\\lvert x\\rvert\\lt 1)', note: '指数不是正整数时用，x 的绝对值要小于 1' },
+      { name: '泰勒公式', tex: 'f(x)=\\sum_{k=0}^{n}\\frac{f^{(k)}(a)}{k!}(x-a)^{k}+R_n(x)', note: '用多项式逼近函数，余项说明误差有多大' },
+      { name: '拉格朗日余项', tex: 'R_n(x)=\\frac{f^{(n+1)}(c)}{(n+1)!}(x-a)^{n+1},\\qquad c\\ \\text{在}\\ a,x\\ \\text{之间}', note: '余项里的 c 在 a 和 x 之间，估计时取最坏情况' },
+      { name: '泰勒不等式', tex: 'f(x)=P_n(x)+R_n(x),\\qquad \\lvert R_n(x)\\rvert\\le\\frac{M}{(n+1)!}\\lvert x-a\\rvert^{n+1}', note: '用高阶导的最大值给出误差上界' },
+      { name: '∑1/n² 的和', tex: '\\sum_{n=1}^{\\infty}\\frac{1}{n^{2}}=\\frac{\\pi^{2}}{6}', note: '这个级数收敛，和正好是 π²/6' },
+      { name: '∑(-1)ⁿ⁺¹/n 的和', tex: '\\sum_{n=1}^{\\infty}\\frac{(-1)^{n+1}}{n}=\\ln2', note: '交错调和级数收敛，和是 ln2' },
+      { name: '积分判别余项估计', tex: '\\sum_{n=N+1}^{\\infty}a_n\\lt \\int_N^{\\infty}f(x)\\,dx\\qquad(f\\ \\text{递减正函数})', note: '用积分估计尾巴有多粗，比直接算余项方便' }
+    ]
+  },
+
+  /* ============================ 9. 坐标、向量与空间曲线 ============================ */
+  {
+    group: '坐标、向量与空间曲线',
+    items: [
+      { name: '参数曲线求导', tex: '\\frac{dy}{dx}=\\frac{dy/dt}{dx/dt}\\qquad\\left(\\frac{dx}{dt}\\ne0\\right)', note: 'y 对 t 的导除以 x 对 t 的导，分母不能为零' },
+      { name: '参数曲线二阶导', tex: '\\frac{d^{2}y}{dx^{2}}=\\frac{\\dfrac{d}{dt}\\left(\\dfrac{dy}{dx}\\right)}{\\dfrac{dx}{dt}}', note: '二阶导要再对 t 求一次，最后除以 dx/dt' },
+      { name: '参数曲线弧长', tex: 'L=\\int_{a}^{b}\\sqrt{\\left(\\frac{dx}{dt}\\right)^{2}+\\left(\\frac{dy}{dt}\\right)^{2}}\\,dt', note: '把速度的大小对时间积分，就是走过的路程' },
+      { name: '参数曲线面积', tex: 'A=\\int_{a}^{b}y\\,dx=\\int_{t_1}^{t_2}g(t)\\,f\'(t)\\,dt', note: '用 y 乘 dx 积分，参数方向决定结果正负' },
+      { name: '极坐标与直角坐标', tex: 'x=r\\cos\\theta,\\qquad y=r\\sin\\theta,\\qquad r^{2}=x^{2}+y^{2}', note: '两种坐标互化先画图，r 可以取负值' },
+      { name: '极坐标面积', tex: 'A=\\frac12\\int_{\\alpha}^{\\beta}r^{2}\\,d\\theta', note: '扇形面积累加，公式里有个二分之一' },
+      { name: '极坐标弧长', tex: 'L=\\int_{\\alpha}^{\\beta}\\sqrt{r^{2}+\\left(\\frac{dr}{d\\theta}\\right)^{2}}\\,d\\theta', note: '根号里是 r² 加上 r 对 θ 导数的平方' },
+      { name: '圆锥曲线的极坐标方程', tex: 'r=\\frac{ke}{1+e\\cos\\theta}', note: '焦点在原点时用，e 决定曲线是哪一种' },
+      { name: '椭圆离心率', tex: 'e=\\frac{\\sqrt{a^{2}-b^{2}}}{a}\\qquad(0\\le e\\lt 1)', note: '离心率越接近零越圆，越接近 1 越扁' },
+      { name: '双曲线离心率', tex: 'e=\\frac{\\sqrt{a^{2}+b^{2}}}{a}\\qquad(e>1)', note: '双曲线的离心率总是大于 1' },
+      { name: '双曲线的渐近线', tex: '\\frac{x^{2}}{a^{2}}-\\frac{y^{2}}{b^{2}}=1\\ \\Longrightarrow\\ y=\\pm\\frac ba x', note: '画图前先画这两条直线，曲线会贴着它们走' },
+      { name: '向量长度', tex: '\\lvert\\mathbf v\\rvert=\\sqrt{v_1^{2}+v_2^{2}+v_3^{2}}', note: '三个分量平方和开根号，就是空间距离公式' },
+      { name: '单位向量', tex: '\\mathbf u=\\frac{\\mathbf v}{\\lvert\\mathbf v\\rvert}\\qquad(\\mathbf v\\ne\\mathbf 0)', note: '方向不变长度变 1，分母是原来的长度' },
+      { name: '点积', tex: '\\mathbf u\\cdot\\mathbf v=\\lvert\\mathbf u\\rvert\\lvert\\mathbf v\\rvert\\cos\\theta=u_1v_1+u_2v_2+u_3v_3', note: '算出来是数不是向量，可用来判断垂直' },
+      { name: '两向量夹角', tex: '\\cos\\theta=\\frac{\\mathbf u\\cdot\\mathbf v}{\\lvert\\mathbf u\\rvert\\lvert\\mathbf v\\rvert}', note: '点积除以两个模长，结果在 -1 到 1 之间' },
+      { name: '向量投影', tex: '\\operatorname{proj}_{\\mathbf v}\\mathbf u=\\frac{\\mathbf u\\cdot\\mathbf v}{\\lvert\\mathbf v\\rvert^{2}}\\mathbf v,\\qquad \\operatorname{comp}_{\\mathbf v}\\mathbf u=\\frac{\\mathbf u\\cdot\\mathbf v}{\\lvert\\mathbf v\\rvert}', note: '投影是向量，分量是数，别把两者搞混' },
+      { name: '叉积（展开式）', tex: '\\mathbf u\\times\\mathbf v=(u_2v_3-u_3v_2)\\mathbf i-(u_1v_3-u_3v_1)\\mathbf j+(u_1v_2-u_2v_1)\\mathbf k', note: '算出来是向量，方向和两个向量都垂直' },
+      { name: '叉积的模与面积', tex: '\\lvert\\mathbf u\\times\\mathbf v\\rvert=\\lvert\\mathbf u\\rvert\\lvert\\mathbf v\\rvert\\sin\\theta=\\text{平行四边形面积}', note: '叉积的模就是平行四边形面积，三角形取一半' },
+      { name: '三重积与体积', tex: '(\\mathbf u\\times\\mathbf v)\\cdot\\mathbf w=\\text{平行六面体体积（取绝对值）}', note: '结果是数，取绝对值才是体积' },
+      { name: '空间直线（点向式）', tex: '\\mathbf r=\\mathbf r_0+t\\mathbf v\\quad\\Longleftrightarrow\\quad \\frac{x-x_0}{v_1}=\\frac{y-y_0}{v_2}=\\frac{z-z_0}{v_3}', note: '需要一个点和方向向量，分母为零时单独写' },
+      { name: '空间平面方程', tex: 'a(x-x_0)+b(y-y_0)+c(z-z_0)=0,\\qquad \\mathbf n=\\langle a,b,c\\rangle', note: '法向量和平面垂直，点法式最直接' },
+      { name: '点到平面的距离', tex: 'd=\\frac{\\lvert Ax_1+By_1+Cz_1-D\\rvert}{\\sqrt{A^{2}+B^{2}+C^{2}}}\\qquad(Ax+By+Cz=D)', note: '先把平面写成一般式，再代点进去取绝对值' },
+      { name: '空间曲线弧长', tex: 'L=\\int_{a}^{b}\\lvert\\mathbf v(t)\\rvert\\,dt=\\int_{a}^{b}\\sqrt{(x\')^{2}+(y\')^{2}+(z\')^{2}}\\,dt', note: '速度向量的模对参数积分，三维也一样' },
+      { name: '单位切向量', tex: '\\mathbf T=\\frac{\\mathbf v}{\\lvert\\mathbf v\\rvert}=\\frac{d\\mathbf r}{ds}', note: '速度除以速度的大小，指向运动方向' },
+      { name: '曲率（向量形式）', tex: '\\kappa=\\frac{\\lvert\\mathbf v\\times\\mathbf a\\rvert}{\\lvert\\mathbf v\\rvert^{3}}=\\left\\lvert\\frac{d\\mathbf T}{ds}\\right\\rvert', note: '叉积的模除以速度的立方，直线曲率为零' },
+      { name: '主法向量与副法向量', tex: '\\mathbf N=\\frac{d\\mathbf T/dt}{\\lvert d\\mathbf T/dt\\rvert},\\qquad \\mathbf B=\\mathbf T\\times\\mathbf N', note: '三个向量两两垂直，构成运动坐标系' },
+      { name: '加速度的切向与法向分量', tex: 'a_T=\\frac{\\mathbf v\\cdot\\mathbf a}{\\lvert\\mathbf v\\rvert},\\qquad a_N=\\frac{\\lvert\\mathbf v\\times\\mathbf a\\rvert}{\\lvert\\mathbf v\\rvert}=\\sqrt{\\lvert\\mathbf a\\rvert^{2}-a_T^{2}}', note: '切向管快慢，法向管转弯，两者平方和是总加速度' },
+      { name: '曲率圆', tex: '\\rho=\\frac1\\kappa,\\qquad C=\\mathbf r+\\rho\\mathbf N', note: '半径是曲率的倒数，圆心沿法向量方向' },
+      { name: '抛体运动', tex: '\\mathbf r(t)=(v_0\\cos\\alpha)t\\,\\mathbf i+\\left[(v_0\\sin\\alpha)t-\\frac12gt^{2}\\right]\\mathbf j', note: '水平匀速，竖直受重力，两个方向分开算' },
+      { name: '抛体射程与最高点', tex: 'R=\\frac{v_0^{2}}{g}\\sin2\\alpha,\\qquad y_{\\max}=\\frac{(v_0\\sin\\alpha)^{2}}{2g},\\qquad t_{\\text{飞行}}=\\frac{2v_0\\sin\\alpha}{g}', note: '四十五度射程最远，最高点只看竖直分量' }
+    ]
+  },
+
+  /* ============================ 10. 多元微积分 ============================ */
+  {
+    group: '多元微积分',
+    items: [
+      { name: '偏导数定义', tex: 'f_x(x_0,y_0)=\\lim_{h\\to0}\\frac{f(x_0+h,y_0)-f(x_0,y_0)}{h}', note: '对一个变量求导时，其他变量当常数看' },
+      { name: '全微分', tex: 'df=f_x\\,dx+f_y\\,dy,\\qquad \\Delta f\\approx df', note: '两个方向的变化加起来，近似时略去高阶小量' },
+      { name: '链式法则（一元中间变量）', tex: '\\frac{dw}{dt}=\\frac{\\partial w}{\\partial x}\\frac{dx}{dt}+\\frac{\\partial w}{\\partial y}\\frac{dy}{dt}', note: '中间变量都依赖 t 时，各条路径的贡献相加' },
+      { name: '链式法则（两条独立变量）', tex: '\\frac{\\partial w}{\\partial r}=\\frac{\\partial w}{\\partial x}\\frac{\\partial x}{\\partial r}+\\frac{\\partial w}{\\partial y}\\frac{\\partial y}{\\partial r}+\\frac{\\partial w}{\\partial z}\\frac{\\partial z}{\\partial r}', note: '每个中间变量都要乘上它对新变量的偏导' },
+      { name: '隐函数偏导', tex: '\\frac{\\partial z}{\\partial x}=-\\frac{F_x}{F_z},\\qquad \\frac{\\partial z}{\\partial y}=-\\frac{F_y}{F_z}\\qquad(F_z\\ne0)', note: 'F 对 x 的偏导除以 F 对 z 的偏导，前面带负号' },
+      { name: '方向导数', tex: 'D_{\\mathbf u}f=\\nabla f\\cdot\\mathbf u\\qquad(\\mathbf u\\ \\text{为单位向量})', note: '梯度点乘单位向量，方向必须先单位化' },
+      { name: '梯度', tex: '\\nabla f=\\langle f_x,f_y,f_z\\rangle', note: '各偏导排成向量，指向函数增长最快的方向' },
+      { name: '最大变化率', tex: '\\max D_{\\mathbf u}f=\\lvert\\nabla f\\rvert,\\qquad \\text{方向 }\\frac{\\nabla f}{\\lvert\\nabla f\\rvert}', note: '方向导数最大就是梯度的模，方向沿梯度' },
+      { name: '切平面（曲面 z=f）', tex: 'f_x(x_0,y_0)(x-x_0)+f_y(x_0,y_0)(y-y_0)-(z-z_0)=0', note: '先求两个偏导，再写成点法式' },
+      { name: '切平面（等值面 F=c）', tex: 'F_x(P_0)(x-x_0)+F_y(P_0)(y-y_0)+F_z(P_0)(z-z_0)=0', note: '法向量就是梯度，和显式曲面是一回事' },
+      { name: '二元线性化', tex: 'L(x,y)=f(x_0,y_0)+f_x(x-x_0)+f_y(y-y_0)', note: '在点附近用切平面代替曲面，越远越不准' },
+      { name: '二阶判别式', tex: 'D=f_{xx}f_{yy}-f_{xy}^{2}:\\ D>0,f_{xx}>0\\ \\text{极小};\\ D>0,f_{xx}\\lt 0\\ \\text{极大};\\ D\\lt 0\\ \\text{鞍点}', note: '先看 D 的符号，再看 fxx，D 为零时失效' },
+      { name: '拉格朗日乘子', tex: '\\nabla f=\\lambda\\nabla g,\\qquad g(x,y,z)=0', note: '求约束极值时，两个梯度方向要平行' },
+      { name: '两个约束的拉格朗日', tex: '\\nabla f=\\lambda\\nabla g_1+\\mu\\nabla g_2,\\qquad g_1=0,\\ g_2=0', note: '两个约束就引入两个乘子，梯度是两者的组合' },
+      { name: '二重积分（矩形区域）', tex: '\\iint_R f(x,y)\\,dA=\\int_a^b\\!\\!\\int_c^d f(x,y)\\,dy\\,dx', note: '矩形区域可以逐次积分，先后次序能交换' },
+      { name: '一般区域的二重积分', tex: '\\iint_R f\\,dA=\\int_a^b\\!\\!\\int_{g_1(x)}^{g_2(x)}f(x,y)\\,dy\\,dx', note: '先画区域定上下限，内层上下限可以含 x' },
+      { name: '极坐标二重积分', tex: '\\iint_R f\\,dA=\\int_{\\alpha}^{\\beta}\\!\\!\\int_{r_1(\\theta)}^{r_2(\\theta)}f(r\\cos\\theta,r\\sin\\theta)\\,r\\,dr\\,d\\theta', note: '别忘了多乘一个 r，这是最常见的漏项' },
+      { name: '三重积分（直角坐标）', tex: '\\iiint_D F\\,dV=\\int_a^b\\!\\!\\int_{g_1(x)}^{g_2(x)}\\!\\!\\int_{f_1(x,y)}^{f_2(x,y)}F\\,dz\\,dy\\,dx', note: '从里往外积，每层上下限可以依赖外层变量' },
+      { name: '柱面坐标', tex: 'dV=r\\,dz\\,dr\\,d\\theta,\\qquad x=r\\cos\\theta,\\ y=r\\sin\\theta,\\ z=z', note: '有旋转对称时用，体积元多一个 r' },
+      { name: '球面坐标', tex: 'dV=\\rho^{2}\\sin\\phi\\,d\\rho\\,d\\phi\\,d\\theta,\\qquad x=\\rho\\sin\\phi\\cos\\theta,\\ y=\\rho\\sin\\phi\\sin\\theta,\\ z=\\rho\\cos\\phi', note: '球对称时用，体积元是 ρ² 乘 sinφ' },
+      { name: '二重积分换元', tex: '\\iint_R f(x,y)\\,dx\\,dy=\\iint_G f\\bigl(g(u,v),h(u,v)\\bigr)\\left\\lvert\\frac{\\partial(x,y)}{\\partial(u,v)}\\right\\rvert du\\,dv', note: '换元后要乘雅可比行列式的绝对值' },
+      { name: '雅可比行列式（二维）', tex: 'J=\\frac{\\partial(x,y)}{\\partial(u,v)}=\\frac{\\partial x}{\\partial u}\\frac{\\partial y}{\\partial v}-\\frac{\\partial x}{\\partial v}\\frac{\\partial y}{\\partial u}', note: '四个偏导交叉相乘再相减，顺序别搞反' },
+      { name: '面积与体积的积分表示', tex: 'A=\\iint_R dA,\\qquad V=\\iiint_D dV', note: '被积函数取 1 时，积分就是区域的大小' },
+      { name: '二重积分的平均值', tex: '\\bar f=\\frac{1}{\\text{area}(R)}\\iint_R f\\,dA', note: '积分除以区域面积，和一元情形一样' },
+      { name: '平面薄板的质心', tex: '\\bar x=\\frac{1}{M}\\iint_R x\\delta\\,dA,\\qquad \\bar y=\\frac{1}{M}\\iint_R y\\delta\\,dA', note: '密度乘坐标再积分，最后除以总质量' },
+      { name: '转动惯量', tex: 'I_x=\\iint_R y^{2}\\delta\\,dA,\\qquad I_y=\\iint_R x^{2}\\delta\\,dA,\\qquad I_0=I_x+I_y', note: '到轴的距离平方乘密度积分，极惯性矩相加' }
+    ]
+  },
+
+  /* ============================ 11. 向量场与微分方程 ============================ */
+  {
+    group: '向量场与微分方程',
+    items: [
+      { name: '标量函数的线积分', tex: '\\int_C f\\,ds=\\int_a^b f\\bigl(\\mathbf r(t)\\bigr)\\lvert\\mathbf r\'(t)\\rvert\\,dt', note: '把曲线参数化，ds 换成速度的模乘 dt' },
+      { name: '向量场的线积分', tex: '\\int_C\\mathbf F\\cdot d\\mathbf r=\\int_a^b\\mathbf F\\bigl(\\mathbf r(t)\\bigr)\\cdot\\mathbf r\'(t)\\,dt', note: '力和位移点乘再积分，算的是做功' },
+      { name: '线积分基本定理', tex: '\\int_C\\nabla f\\cdot d\\mathbf r=f(B)-f(A)', note: '保守场里只看起点和终点，和路径无关' },
+      { name: '保守场的判据', tex: '\\mathbf F=M\\mathbf i+N\\mathbf j\\ \\text{保守}\\ \\Longleftrightarrow\\ \\frac{\\partial N}{\\partial x}=\\frac{\\partial M}{\\partial y}\\quad(\\text{单连通})', note: '交叉偏导相等就保守，但要求区域单连通' },
+      { name: '格林定理（环量形式）', tex: '\\oint_C M\\,dx+N\\,dy=\\iint_R\\left(\\frac{\\partial N}{\\partial x}-\\frac{\\partial M}{\\partial y}\\right)dA', note: '把边界上的线积分换成区域上的二重积分' },
+      { name: '格林定理（通量形式）', tex: '\\oint_C M\\,dy-N\\,dx=\\iint_R\\left(\\frac{\\partial M}{\\partial x}+\\frac{\\partial N}{\\partial y}\\right)dA', note: '算流出边界的通量时用，注意法向量方向' },
+      { name: '用格林定理求面积', tex: 'A=\\frac12\\oint_C\\bigl(x\\,dy-y\\,dx\\bigr)', note: '边界曲线围成的面积，用线积分算更省事' },
+      { name: '曲面积分（参数形式）', tex: '\\iint_S G\\,d\\sigma=\\iint_R G\\bigl(\\mathbf r(u,v)\\bigr)\\lvert\\mathbf r_u\\times\\mathbf r_v\\rvert\\,du\\,dv', note: '曲面参数化后，面积元是叉积的模' },
+      { name: '显式曲面的面积元', tex: 'd\\sigma=\\sqrt{f_x^{2}+f_y^{2}+1}\\,dx\\,dy\\qquad(z=f(x,y))', note: '曲面写成 z=f 时，面积元多一个根号因子' },
+      { name: '通量（显式曲面）', tex: '\\iint_S\\mathbf F\\cdot\\mathbf n\\,d\\sigma=\\iint_R\\bigl(-Mf_x-Nf_y+P\\bigr)\\,dx\\,dy', note: '把法向量投影到竖直方向，注意正负号' },
+      { name: '散度', tex: '\\operatorname{div}\\mathbf F=\\nabla\\cdot\\mathbf F=\\frac{\\partial M}{\\partial x}+\\frac{\\partial N}{\\partial y}+\\frac{\\partial P}{\\partial z}', note: '各分量对本变量求偏导再相加，结果是数' },
+      { name: '旋度（展开式）', tex: '\\operatorname{curl}\\mathbf F=\\nabla\\times\\mathbf F=\\left(\\frac{\\partial P}{\\partial y}-\\frac{\\partial N}{\\partial z}\\right)\\mathbf i+\\left(\\frac{\\partial M}{\\partial z}-\\frac{\\partial P}{\\partial x}\\right)\\mathbf j+\\left(\\frac{\\partial N}{\\partial x}-\\frac{\\partial M}{\\partial y}\\right)\\mathbf k', note: '结果是向量，衡量场旋转的强弱和方向' },
+      { name: '斯托克斯定理', tex: '\\oint_C\\mathbf F\\cdot d\\mathbf r=\\iint_S(\\nabla\\times\\mathbf F)\\cdot\\mathbf n\\,d\\sigma', note: '边界上的环量等于曲面上旋度的通量' },
+      { name: '散度定理（高斯定理）', tex: '\\oiint_S\\mathbf F\\cdot\\mathbf n\\,d\\sigma=\\iiint_D\\nabla\\cdot\\mathbf F\\,dV', note: '穿过闭曲面的通量等于内部散度的三重积分' },
+      { name: '旋度场无散', tex: '\\nabla\\cdot(\\nabla\\times\\mathbf F)=0', note: '任何旋度场的散度都是零，可反证不是旋度' },
+      { name: '梯度场无旋', tex: '\\nabla\\times(\\nabla f)=\\mathbf 0', note: '梯度场的旋度为零，是保守场的另一种说法' },
+      { name: '一阶线性方程', tex: 'y\'+P(x)y=Q(x)\\ \\Longrightarrow\\ \\mu y=\\int\\mu Q\\,dx+C,\\qquad \\mu=e^{\\int P\\,dx}', note: '先算积分因子，两边乘上后左边成为乘积导数' },
+      { name: '积分因子', tex: '\\mu(x)=e^{\\int P(x)\\,dx}', note: '指数上是对 P 的积分，这里不用加常数' },
+      { name: '可分离变量方程', tex: '\\frac{dy}{g(y)}=f(x)\\,dx\\ \\Longrightarrow\\ \\int\\frac{dy}{g(y)}=\\int f(x)\\,dx+C', note: '把 y 和 x 分到两边，各自积分再加常数' },
+      { name: '指数增长与衰减', tex: '\\frac{dP}{dt}=kP\\ \\Longrightarrow\\ P=P_0e^{kt}', note: '增长率恒定时，解一定是指数函数' },
+      { name: 'logistic 方程', tex: '\\frac{dP}{dt}=rP(M-P)\\ \\Longrightarrow\\ P(t)=\\frac{M}{1+Ae^{-rMt}},\\quad A=\\frac{M-P_0}{P_0}', note: '有环境容量时增长先快后慢，最后趋于 M' },
+      { name: '欧拉法', tex: 'y_n=y_{n-1}+f(x_{n-1},y_{n-1})\\Delta x,\\qquad x_n=x_{n-1}+\\Delta x', note: '用切线一步步往前推，步长越小越准' },
+      { name: '二阶常系数方程', tex: 'ay\'\'+by\'+cy=G(x),\\qquad ar^{2}+br+c=0\\ \\text{为特征方程}', note: '先写特征方程，解出根再定齐次解的形式' },
+      { name: '特征根（相异实根）', tex: 'r_1\\ne r_2\\ \\text{实}:\\ y_c=c_1e^{r_1x}+c_2e^{r_2x}', note: '两个不同的实根，直接写成两个指数相加' },
+      { name: '特征根（重根）', tex: 'r_1=r_2=r:\\ y_c=(c_1+c_2x)e^{rx}', note: '重根时第二个解要乘一个 x，否则两解重复' },
+      { name: '特征根（共轭复根）', tex: 'r=\\alpha\\pm\\beta i:\\ y_c=e^{\\alpha x}\\bigl(c_1\\cos\\beta x+c_2\\sin\\beta x\\bigr)', note: '复根时解是振荡的，实部决定增长还是衰减' },
+      { name: '非齐次通解', tex: 'y=y_c+y_p', note: '齐次解加一个特解，两者缺一不可' },
+      { name: '待定系数法（正弦型）', tex: 'G(x)=\\sin bx:\\ y_p=C\\cos bx+D\\sin bx', note: '右端是正弦余弦时，特解也设成同类的组合' },
+      { name: '参数变易法', tex: 'y_p=-y_1\\int\\frac{y_2f}{W}\\,dx+y_2\\int\\frac{y_1f}{W}\\,dx,\\qquad W=y_1y_2\'-y_1\'y_2,\\ f=\\frac Ga', note: '右端形式不好猜时用，靠朗斯基行列式构造' },
+      { name: '欧拉方程', tex: 'ax^{2}y\'\'+bxy\'+cy=0\\ \\Longrightarrow\\ ar(r-1)+br+c=0', note: 'x 的幂次做系数时，试 y=x^r 化成代数方程' },
+      { name: '弹簧振子方程', tex: 'm\\frac{d^{2}y}{dt^{2}}+d\\frac{dy}{dt}+ky=0', note: '阻尼项的大小决定振动会不会衰减' },
+      { name: 'RLC 电路方程', tex: 'L\\frac{d^{2}q}{dt^{2}}+R\\frac{dq}{dt}+\\frac1Cq=E(t)', note: '和弹簧振子方程形式一样，只是字母不同' },
+      { name: '简谐运动', tex: 'y\'\'+\\omega^{2}y=0\\ \\Longrightarrow\\ y=C\\sin(\\omega t+\\phi),\\qquad \\omega=\\sqrt{k/m}', note: '没有阻尼时永远振动，频率由 k 和 m 决定' }
+    ]
+  }
+
+]);

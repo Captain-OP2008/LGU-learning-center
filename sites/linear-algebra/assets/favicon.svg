@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="LINEAR ALGEBRA">
+  <g fill="none" stroke-width="3.4" stroke-linecap="square">
+    <path d="M17 13 H11 V51 H17" stroke="#c82337"/>
+    <path d="M47 13 H53 V51 H47" stroke="#2f4c79"/>
+  </g>
+  <g>
+    <circle cx="21" cy="20" r="2.9" fill="#e06236"/>
+    <circle cx="32" cy="20" r="2.9" fill="#d7ab61"/>
+    <circle cx="43" cy="20" r="2.9" fill="#2f4c79"/>
+    <circle cx="21" cy="32" r="2.9" fill="#d7ab61"/>
+    <circle cx="32" cy="32" r="2.9" fill="#e6edf7"/>
+    <circle cx="43" cy="32" r="2.9" fill="#e06236"/>
+    <circle cx="21" cy="44" r="2.9" fill="#2f4c79"/>
+    <circle cx="32" cy="44" r="2.9" fill="#c82337"/>
+    <circle cx="43" cy="44" r="2.9" fill="#d7ab61"/>
+  </g>
+</svg>

@@ -1,0 +1,825 @@
+/* =====================================================================
+   assets/math.css · 数学内容外观层
+   职责：公式排版容器、公式纸片、例题卡、定理卡、公式清单、考纲徽章、
+        演算台、表格卡片化、打印。全部使用 observatory.css 的令牌变量。
+   ===================================================================== */
+
+/* ---------------------------------------------------------------- 01 公式基础 */
+mjx-container {
+  color: var(--text);
+  max-width: 100%;
+}
+mjx-container[jax="SVG"] > svg {
+  /* 行内公式的尺寸完全交给 MathJax 自带的 width/height 属性。
+     这里若设 max-width:100% / height:auto，会因为 mjx-container 是 inline、
+     父宽度又由内容决定而产生循环依赖，Chrome 会把整条公式压成一条细线
+     （看起来像 "__"）。块级公式靠父级 overflow-x:auto 处理超宽。 */
+  max-width: none;
+}
+mjx-container svg {
+  color: inherit;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 0;
+}
+
+/* 行内公式过宽时，由 math.js 打上 .mathBlock → 提升为独立居中一行 */
+mjx-container.mathBlock {
+  display: block;
+  margin: 12px auto;
+  text-align: center;
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  backdrop-filter: blur(1px);
+}
+
+/* 独立公式：默认给一张「公式纸片」 */
+mjx-container[display="true"] {
+  display: block;
+  margin: 16px auto;
+  padding: 12px 18px;
+  border-left: 2px solid var(--line2);
+  background: linear-gradient(90deg, rgba(59, 78, 107, .09), transparent 65%);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* 公式纸片（内容侧显式包一层时可加 .eqPlate） */
+.eqPlate {
+  position: relative;
+  margin: 16px 0;
+  padding: 12px 18px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.eqPlate.scrollable { overflow-x: auto; }
+.eqPlate > mjx-container[display="true"] {
+  border-left: 0;
+  background: none;
+  margin: 0;
+  padding: 0;
+}
+.eqPlate .eqCap {
+  margin-top: 8px;
+  font: 400 10px/1.5 var(--mono);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+/* 公式纸片内 MathJax 的横向滚动条统一压扁 */
+mjx-container::-webkit-scrollbar { height: 4px; }
+mjx-container::-webkit-scrollbar-thumb { background: var(--line2); }
+
+/* ---------------------------------------------------------------- 02 考纲徽章 */
+.scopeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border: 1px solid currentColor;
+  font: 500 9.5px/1.6 var(--mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.scopeBadge[data-scope="midterm"] { color: var(--const-orange); }
+.scopeBadge[data-scope="final"] { color: var(--const-yellow); }
+.scopeBadge[data-scope="both"] { color: var(--const-red); }
+.scopeBadge[data-scope="prereq"] { color: var(--const-blue); }
+.scopeBadge[data-scope="outside"] { color: var(--text3); }
+.scopeBadge[data-scope="guide"],
+.scopeBadge[data-scope="tool"] { color: var(--text2); }
+.scopeBadge .sbDot {
+  width: 4px; height: 4px;
+  background: currentColor;
+  border-radius: 50%;
+}
+
+/* 章节页顶部的一条考纲横幅 */
+.scopeBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 0 0 18px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--const-yellow);
+  background: var(--surface);
+  font: 400 11px/1.7 var(--mono);
+  letter-spacing: .06em;
+  color: var(--text2);
+}
+.scopeBar b { color: var(--text); font-weight: 500; }
+.scopeBar .sbSep { color: var(--text3); }
+
+/* ---------------------------------------------------------------- 03 例题卡 */
+.exCard {
+  position: relative;
+  margin: 18px 0;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.exCard::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--const-orange);
+}
+.exHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 12px;
+  padding: 10px 14px 10px 16px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(224, 98, 54, .05);
+}
+.exNo {
+  font: 500 10px/1.6 var(--mono);
+  letter-spacing: .16em;
+  color: var(--const-orange);
+  text-transform: uppercase;
+}
+.exTag {
+  font: 400 10.5px/1.6 var(--mono);
+  color: var(--text3);
+  letter-spacing: .06em;
+}
+.exBody { padding: 4px 16px 12px; }
+.exBody > :first-child { margin-top: 10px; }
+.exField {
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  gap: 8px;
+  margin: 10px 0;
+  align-items: start;
+}
+.exField > .fk {
+  font: 500 10px/1.9 var(--mono);
+  letter-spacing: .14em;
+  color: var(--text3);
+  text-transform: uppercase;
+  padding-top: 2px;
+  border-right: 1px solid var(--line);
+  padding-right: 8px;
+}
+.exField > .fv { min-width: 0; }
+.exField > .fv > :first-child { margin-top: 0; }
+.exField > .fv > :last-child { margin-bottom: 0; }
+.exField[data-k="题目"] > .fk { color: var(--const-yellow); }
+.exField[data-k="思路"] > .fk { color: var(--const-blue); }
+.exField[data-k="解答"] > .fk { color: var(--text2); }
+.exField[data-k="点评"] > .fk { color: var(--const-orange); }
+.exField[data-k="易错"] > .fk { color: var(--const-red); }
+
+/* ---------------------------------------------------------------- 04 定理卡 */
+.thmCard {
+  margin: 16px 0;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--const-yellow);
+  background: var(--surface);
+}
+.thmHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(215, 171, 97, .05);
+}
+.thmName {
+  font: 500 11px/1.6 var(--mono);
+  letter-spacing: .1em;
+  color: var(--const-yellow);
+  text-transform: uppercase;
+}
+.thmZh { font-size: 13px; color: var(--text); }
+.thmBody { padding: 6px 14px 12px; }
+.thmRow {
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  gap: 10px;
+  margin: 9px 0;
+  align-items: start;
+}
+.thmRow > .tk {
+  font: 500 9.5px/2 var(--mono);
+  letter-spacing: .12em;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+.thmRow[data-k="条件"] > .tk { color: var(--const-blue); }
+.thmRow[data-k="结论"] > .tk { color: var(--const-yellow); }
+.thmRow[data-k="用法"] > .tk { color: var(--const-orange); }
+.thmRow > .tv { min-width: 0; }
+.thmRow > .tv > :first-child { margin-top: 0; }
+.thmRow > .tv > :last-child { margin-bottom: 0; }
+
+/* ---------------------------------------------------------------- 05 公式清单 */
+.formulaGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1px;
+  margin: 16px 0;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+.formulaRow {
+  display: grid;
+  grid-template-columns: minmax(120px, 30%) 1fr;
+  gap: 14px;
+  padding: 11px 14px;
+  background: var(--bg-navy);
+  align-items: center;
+}
+.formulaRow > .frName {
+  font: 400 11.5px/1.7 var(--mono);
+  letter-spacing: .04em;
+  color: var(--text3);
+}
+.formulaRow > .frBody { min-width: 0; overflow-x: auto; }
+.formulaRow > .frBody > :first-child { margin-top: 0; }
+.formulaRow > .frBody > :last-child { margin-bottom: 0; }
+@media (max-width: 640px) {
+  .formulaRow { grid-template-columns: 1fr; gap: 4px; }
+}
+
+/* ---------------------------------------------------------------- 06 列表块 */
+.blockList {
+  margin: 12px 0;
+  padding-left: 0;
+  list-style: none;
+  counter-reset: bl;
+}
+.blockList > li {
+  position: relative;
+  margin: 8px 0;
+  padding-left: 20px;
+  line-height: 1.9;
+  color: var(--text2);
+}
+.blockList > li::before {
+  content: '·';
+  position: absolute;
+  left: 5px;
+  top: -1px;
+  color: var(--const-yellow);
+  font-weight: 700;
+  font-size: 15px;
+}
+.blockList.ordered { counter-reset: blo; }
+.blockList.ordered > li { counter-increment: blo; padding-left: 26px; }
+.blockList.ordered > li::before {
+  content: counter(blo);
+  left: 0; top: 3px;
+  width: 18px;
+  font: 500 9.5px/1.7 var(--mono);
+  color: var(--const-orange);
+  text-align: right;
+  letter-spacing: .02em;
+}
+.blockList > li > ul,
+.blockList > li > ol { margin: 6px 0 2px; padding-left: 18px; }
+.blockList > li > ul > li,
+.blockList > li > ol > li { margin: 4px 0; }
+
+/* ---------------------------------------------------------------- 07 表格 */
+.tableWrap {
+  margin: 16px 0;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+}
+.tableWrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.tableWrap th,
+.tableWrap td {
+  padding: 8px 11px;
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+  line-height: 1.75;
+}
+.tableWrap th {
+  background: rgba(59, 78, 107, .18);
+  color: var(--text);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.tableWrap tr:last-child td { border-bottom: 0; }
+.tableWrap th:last-child,
+.tableWrap td:last-child { border-right: 0; }
+.tableWrap tr:hover td { background: rgba(59, 78, 107, .08); }
+.tableWrap .tblWrap { overflow-x: auto; }
+.tableWrap .tblWrap table { min-width: 100%; }
+.tableWrap .tblWrap.t5 table { min-width: 42em; }
+.tableWrap .tblWrap.t6 table { min-width: 50em; }
+.tableWrap .tblWrap.t7 table { min-width: 58em; }
+.tableWrap .cap {
+  padding: 8px 11px;
+  border-top: 1px solid var(--line);
+  font: 400 10px/1.6 var(--mono);
+  color: var(--text3);
+  letter-spacing: .06em;
+}
+
+/* 窄屏：表格 → 一列卡片 */
+@media (max-width: 700px) {
+  .tableWrap { border: 0; overflow: visible; }
+  .tableWrap table,
+  .tableWrap tbody,
+  .tableWrap tr,
+  .tableWrap td { display: block; width: 100%; }
+  .tableWrap thead { display: none; }
+  .tableWrap tr {
+    margin: 0 0 10px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .tableWrap td {
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 8px 12px 8px 12px;
+    position: relative;
+  }
+  .tableWrap td:last-child { border-bottom: 0; }
+  .tableWrap td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 3px;
+    font: 500 9.5px/1.6 var(--mono);
+    letter-spacing: .12em;
+    color: var(--text3);
+    text-transform: uppercase;
+  }
+}
+
+/* ---------------------------------------------------------------- 08 章节公式名片 */
+.chWatermark {
+  position: absolute;
+  right: 0;
+  bottom: -6px;
+  max-width: 52%;
+  padding: 6px 10px;
+  opacity: .42;
+  pointer-events: none;
+  overflow: hidden;
+  text-align: right;
+}
+.chWatermark mjx-container { color: var(--text2); }
+@media (max-width: 900px) { .chWatermark { display: none; } }
+
+/* ---------------------------------------------------------------- 09 演算台 */
+.calcBox {
+  margin: 18px 0;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.calcHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(47, 76, 121, .10);
+}
+.calcHead .ci {
+  display: flex;
+  color: var(--const-blue);
+}
+.calcHead .ci svg { width: 15px; height: 15px; }
+.calcHead b {
+  font: 500 11.5px/1.5 var(--mono);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.calcHead span { font-size: 11.5px; color: var(--text3); }
+.calcTag {
+  margin-left: auto;
+  padding: 1px 7px;
+  border: 1px solid var(--line2);
+  font: 400 9px/1.7 var(--mono);
+  letter-spacing: .14em;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+.calcBody { padding: 12px 14px 14px; }
+.calcRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 8px 0;
+}
+.calcRow label {
+  font: 400 10px/1.6 var(--mono);
+  letter-spacing: .1em;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+.calcRow input[type="text"] {
+  flex: 1 1 180px;
+  min-width: 0;
+  padding: 6px 9px;
+  border: 1px solid var(--line2);
+  background: var(--bg-deep);
+  color: var(--text);
+  font: 400 13px/1.5 var(--mono);
+  outline: none;
+}
+.calcRow input[type="text"]:focus { border-color: var(--const-yellow); }
+.calcRow select {
+  padding: 6px 8px;
+  border: 1px solid var(--line2);
+  background: var(--bg-deep);
+  color: var(--text);
+  font: 400 12px/1.5 var(--mono);
+  outline: none;
+}
+.calcRow input[type="range"] { flex: 1 1 140px; accent-color: var(--const-yellow); }
+.calcBtn {
+  padding: 6px 13px;
+  border: 1px solid var(--const-yellow);
+  background: transparent;
+  color: var(--const-yellow);
+  font: 500 10px/1.7 var(--mono);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.calcBtn:hover { background: rgba(215, 171, 97, .12); }
+.calcOut {
+  margin-top: 10px;
+  padding: 11px 13px;
+  border: 1px dashed var(--line2);
+  background: var(--bg-deep);
+  min-height: 42px;
+  overflow-x: auto;
+  font: 400 12.5px/1.85 var(--mono);
+  color: var(--text2);
+}
+.calcOut .coK { color: var(--const-yellow); }
+.calcOut .coV { color: var(--text); }
+.calcOut .coErr { color: var(--const-red); }
+.calcCanvas {
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg-deep);
+}
+.calcHint {
+  margin-top: 8px;
+  font: 400 10.5px/1.7 var(--mono);
+  color: var(--text3);
+  letter-spacing: .03em;
+}
+
+/* ---------------------------------------------------------------- 10 公式速查页 */
+.cheatTabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 18px 0 14px; }
+.cheatTab {
+  padding: 5px 12px;
+  border: 1px solid var(--line2);
+  background: transparent;
+  color: var(--text2);
+  font: 400 11px/1.7 var(--mono);
+  letter-spacing: .06em;
+  cursor: pointer;
+}
+.cheatTab:hover { border-color: var(--const-yellow); color: var(--text); }
+.cheatTab.on {
+  border-color: var(--const-yellow);
+  background: rgba(215, 171, 97, .1);
+  color: var(--const-yellow);
+}
+.cheatGroup { margin: 0 0 26px; }
+.cheatGroup > h3 {
+  margin: 0 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+  font: 500 12px/1.6 var(--mono);
+  letter-spacing: .12em;
+  color: var(--text);
+  text-transform: uppercase;
+}
+.cheatItem {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.cheatItem > .cn { font: 400 11px/1.6 var(--mono); color: var(--text3); letter-spacing: .04em; }
+.cheatItem > .cb { overflow-x: auto; }
+
+/* ---------------------------------------------------------------- 11 术语表 */
+.glossToolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0; }
+.glossAlpha { display: flex; flex-wrap: wrap; gap: 3px; }
+.glossAlpha button {
+  width: 24px; height: 24px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text3);
+  font: 400 10px/1 var(--mono);
+  cursor: pointer;
+}
+.glossAlpha button:hover { border-color: var(--line2); color: var(--text); }
+.glossAlpha button.on { border-color: var(--const-yellow); color: var(--const-yellow); }
+.glossGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1px;
+  margin: 14px 0;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+.glossCard {
+  padding: 12px 14px;
+  background: var(--bg-navy);
+  min-width: 0;
+}
+.glossCard .ge {
+  font: 500 12.5px/1.5 var(--mono);
+  letter-spacing: .02em;
+  color: var(--const-yellow);
+}
+.glossCard .gz { margin-top: 2px; font-size: 13px; color: var(--text); }
+.glossCard .gd { margin-top: 5px; font-size: 12px; line-height: 1.75; color: var(--text3); }
+.glossCard .gc {
+  margin-top: 7px;
+  font: 400 9.5px/1.6 var(--mono);
+  color: var(--text3);
+  letter-spacing: .06em;
+}
+.glossCard .gc a { color: var(--const-blue); text-decoration: none; }
+.glossCard .gc a:hover { text-decoration: underline; }
+
+/* ---------------------------------------------------------------- 12 易错手册 */
+.misList { margin: 16px 0; }
+.misCard {
+  margin: 0 0 1px;
+  border: 1px solid var(--line);
+  background: var(--bg-navy);
+}
+.misCard > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  padding: 11px 14px;
+  cursor: pointer;
+  list-style: none;
+}
+.misCard > summary::-webkit-details-marker { display: none; }
+.misCard > summary::before {
+  content: '+';
+  display: inline-block;
+  width: 12px;
+  font: 400 13px/1 var(--mono);
+  color: var(--const-orange);
+}
+.misCard[open] > summary::before { content: '−'; }
+.misCard .mcTag {
+  padding: 1px 6px;
+  border: 1px solid var(--line2);
+  font: 400 9px/1.7 var(--mono);
+  letter-spacing: .1em;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+.misCard .mcT { font-size: 13px; color: var(--text); }
+.misCard .mcCh { margin-left: auto; font: 400 9.5px/1.7 var(--mono); color: var(--text3); }
+.misCard .mcBody { padding: 0 14px 14px 36px; border-top: 1px solid var(--line); }
+.misCard .mcBody > :first-child { margin-top: 12px; }
+.misCard .mcBad { color: var(--const-red); }
+.misCard .mcGood { color: var(--const-yellow); }
+
+/* ---------------------------------------------------------------- 13 打印 */
+@media print {
+  .scopeBadge, .scopeBar, .calcBox, .calcHint { display: none; }
+  mjx-container[display="true"] {
+    background: none;
+    border-left: 0;
+    padding: 0;
+  }
+  .exCard, .thmCard, .eqPlate, .tableWrap { break-inside: avoid; }
+}
+
+/* ---------------------------------------------------------------- 14 降级 */
+@media (prefers-reduced-motion: reduce) {
+  .tableWrap tr:hover td { background: transparent; }
+}
+
+/* ---------------------------------------------------------------- 15 专用页补充
+   术语表 / 易错手册 / 航线图 / 公式速查 的布局类（配合 pages-reference.css） */
+
+/* 术语表：字母索引按钮条 */
+.glossLetters { display: flex; flex-wrap: wrap; gap: 3px; }
+.glossLetters button {
+  min-width: 24px; height: 24px;
+  padding: 0 5px;
+  border: 1px solid var(--line2);
+  background: transparent;
+  color: var(--text3);
+  font: 400 9.5px/1 var(--mono);
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: border-color .18s, color .18s;
+}
+.glossLetters button:hover { border-color: var(--const-yellow); color: var(--text); }
+.glossLetters button.on {
+  border-color: var(--const-yellow);
+  background: rgba(215, 171, 97, .12);
+  color: var(--const-yellow);
+}
+.glossAlphaHead {
+  display: flex; align-items: center; gap: 12px;
+  margin: 26px 0 12px;
+  font: 400 9px/1 var(--mono);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--const-orange);
+}
+.glossAlphaHead span {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px;
+  border: 1px solid var(--line2);
+  font-size: 11px; letter-spacing: .04em; color: var(--text);
+}
+.glossAlphaHead i { order: 3; font-style: normal; font-size: 8px; letter-spacing: .18em; color: var(--text3); }
+.glossAlphaHead::after { content: ""; order: 2; flex: 1; height: 1px; background: var(--line); }
+.glossGroup { margin: 0 0 10px; }
+.glossToolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px;
+  margin: 16px 0;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.glossToolbar .glossInput { flex: 1 1 220px; }
+.glossCount { font: 400 9.5px/1 var(--mono); letter-spacing: .14em; color: var(--text3); }
+
+/* 易错手册：章节分组 */
+.misSection { margin: 0 0 22px; }
+.misHead {
+  display: flex; align-items: baseline; gap: 10px;
+  margin: 0 0 8px;
+  padding: 6px 0 5px;
+  border-bottom: 1px solid var(--line);
+  font: 400 12px/1 var(--mono);
+  letter-spacing: .06em;
+}
+.misNum { color: var(--const-yellow); font-weight: 500; }
+.misTitle { color: var(--text); }
+.misHead i { margin-left: auto; font-style: normal; font-size: 9px; letter-spacing: .12em; color: var(--text3); }
+.misCard { margin: 0 0 1px; }
+.misCard > summary { cursor: pointer; }
+
+/* 航线图：依赖索引 */
+.depList { margin: 22px 0 0; border-top: 1px solid var(--line); }
+.depHead {
+  padding: 10px 0 8px;
+  font: 400 9.5px/1.6 var(--mono);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.depRow {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.depNum {
+  flex: 0 0 26px;
+  font: 500 11px/1 var(--mono);
+  color: var(--const-yellow);
+}
+.depTitle { flex: 0 1 200px; font-size: 13px; color: var(--text); }
+.depSet { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.depSet > i {
+  font-style: normal;
+  margin-right: 4px;
+  font: 400 8.5px/1.6 var(--mono);
+  letter-spacing: .14em;
+  color: var(--text3);
+  text-transform: uppercase;
+}
+.depChip {
+  display: inline-block;
+  padding: 1px 7px;
+  border: 1px solid var(--line2);
+  font: 400 10px/1.7 var(--mono);
+  color: var(--text2);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.depChip:hover { border-color: var(--const-yellow); color: var(--const-yellow); }
+.depChip.pre { border-color: rgba(159, 192, 226, .4); }
+.depChip.next { border-color: rgba(215, 171, 97, .4); }
+.mapLink { text-decoration: none; }
+
+/* 公式速查：条目备注 */
+.cheatItem { padding: 11px 0; }
+.cheatNote {
+  font: 400 10.5px/1.7 var(--mono);
+  color: var(--text3);
+  letter-spacing: .02em;
+}
+.cheatGroup > h3 { font-family: var(--mono); }
+.cheatTabs { margin: 16px 0 12px; }
+
+/* 导航里的考纲小竖条 */
+.navScope {
+  flex: 0 0 auto;
+  width: 2px; height: 12px;
+  margin-left: auto;
+  background: var(--line2);
+}
+.navScope[data-scope="midterm"] { background: var(--const-orange); }
+.navScope[data-scope="final"] { background: var(--const-yellow); }
+.navScope[data-scope="both"] { background: linear-gradient(180deg, var(--const-orange) 50%, var(--const-yellow) 50%); }
+
+/* 题库：逐项解析 */
+.optExp { display: flex; gap: 8px; margin: 6px 0; align-items: baseline; }
+.optExp .oeL {
+  flex: 0 0 auto;
+  width: 16px;
+  font: 500 10px/1.8 var(--mono);
+  color: var(--text3);
+}
+.optExp .oeT { min-width: 0; }
+.optExp.ok .oeL { color: var(--const-yellow); }
+.optExp.ok .oeT { color: var(--text); }
+
+/* 章节头 · 招牌公式名片 */
+.chFormulaCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0 0;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--const-yellow);
+  background: var(--surface);
+  overflow-x: auto;
+}
+.chFormulaCard .cfk {
+  flex: 0 0 auto;
+  font: 400 8.5px/1.5 var(--mono);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--text3);
+  writing-mode: initial;
+}
+.chFormulaCard .cfv { min-width: 0; flex: 1; overflow-x: auto; }
+.chFormulaCard .cfv mjx-container[display="true"] {
+  margin: 2px 0;
+  padding: 0;
+  border-left: 0;
+  background: none;
+}
+@media (max-width: 640px) {
+  .chFormulaCard { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
+
+/* ---------------------------------------------------------------- 横向溢出可视提示 */
+/* 只有内容确实超出容器时，math.js 的 markXScroll() 才加 .xscroll 并插入 .xHint */
+mjx-container[display="true"].xscroll,
+.tblWrap.xscroll,
+.tableWrap.xscroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line2) transparent;
+}
+mjx-container[display="true"].xscroll {
+  background-image:
+    linear-gradient(to left, rgba(4, 8, 13, .62), rgba(4, 8, 13, 0) 2.8em),
+    linear-gradient(90deg, rgba(59, 78, 107, .09), transparent 65%);
+  background-repeat: no-repeat, no-repeat;
+  background-position: right center, left center;
+  background-size: 2.8em 100%, 100% 100%;
+}
+mjx-container[display="true"].xscroll::-webkit-scrollbar,
+.tblWrap.xscroll::-webkit-scrollbar,
+.tableWrap.xscroll::-webkit-scrollbar { height: 7px; }
+mjx-container[display="true"].xscroll::-webkit-scrollbar-thumb,
+.tblWrap.xscroll::-webkit-scrollbar-thumb,
+.tableWrap.xscroll::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 4px; }
+.xHint {
+  margin: 6px 0 -4px;
+  font: 500 10px/1 var(--mono);
+  letter-spacing: .16em;
+  text-align: right;
+  color: var(--text3);
+  user-select: none;
+  pointer-events: none;
+}
+.xHint span { opacity: .65; }

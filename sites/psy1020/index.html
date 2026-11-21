@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-view="home" data-skin="obs">
+<head>
+<meta charset="utf-8">
+<style>html,body{margin:0;background:#090d14;color-scheme:dark}</style>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>心理学统计方法 · 深空观测台</title>
+<meta property="og:type" content="website">
+<meta property="og:title" content="心理学统计方法 · 深空观测台">
+<meta property="og:description" content="心理学统计方法（Statistical Methods for Psychology）：8 章正文，按「概念 → 例子 → 对比 → 自检」组织，含分章题库、模拟卷、实战项目与本地资料库；纯静态、可离线。">
+<meta property="og:site_name" content="学习中心 · 深空观测台">
+<meta name="twitter:card" content="summary">
+<meta name="description" content="心理学统计方法（Statistical Methods for Psychology）：8 章正文，按「概念 → 例子 → 对比 → 自检」组织，含分章题库、模拟卷、实战项目与本地资料库；纯静态、可离线。">
+<link rel="icon" type="image/svg+xml" href="../../shared/icons/favicon.svg?v=20261121n8">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0e141f">
+<link rel="apple-touch-icon" href="../../shared/icons/icon-192.png">
+<link rel="stylesheet" href="../../shared/css/app.css?v=20261121n8">
+<link rel="stylesheet" href="../../shared/css/observatory.css?v=20261121n8">
+<link rel="stylesheet" href="../../shared/css/pages-reference.css?v=20261121n8">
+<link rel="stylesheet" href="../../shared/css/pages-tools.css?v=20261121n8">
+<link rel="stylesheet" href="../../shared/css/pages-features.css?v=20261121n8">
+<link rel="stylesheet" href="../../shared/css/pages-projects.css?v=20261121n8">
+<link rel="stylesheet" href="../../shared/css/pages-advanced.css?v=20261121n8">
+<link rel="stylesheet" href="../../shared/css/pages-widgets.css?v=20261121n8">
+<!-- ============ 返回学习中心（观测台）顶栏入口 ============ -->
+<style>
+/* 「返回观测台」按钮：沿用 NASA-Punk 细线 HUD 语言。
+   样式写在本文件里，不依赖 app.css / observatory.css 的版本号。 */
+html[data-skin="obs"] .topActions .hubBack{
+  display:inline-flex; align-items:center; gap:7px; flex:0 0 auto;
+  height:28px; padding:0 12px;
+  border:1px solid var(--line2); border-radius:0; background:none;
+  font-family:var(--mono); font-size:9.5px; font-weight:400;
+  letter-spacing:.14em; color:var(--text2);
+  text-decoration:none; white-space:nowrap;
+  transition:all var(--dur);
+}
+html[data-skin="obs"] .topActions .hubBack:hover{
+  border-color:var(--const-orange); color:var(--text-white); text-decoration:none;
+}
+html[data-skin="obs"] .topActions .hubBack:focus-visible{
+  outline:1px solid var(--const-orange); outline-offset:2px;
+}
+html[data-skin="obs"] .topActions .hubBack svg{
+  width:13px; height:13px; flex:0 0 auto;
+  fill:none; stroke:currentColor; stroke-width:1.6;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+/* 窄屏：只留箭头，与 MANUAL 图标按钮同尺寸 */
+@media (max-width:560px){
+  html[data-skin="obs"] .topActions .hubBack{
+    width:28px; height:28px; padding:0; justify-content:center; gap:0;
+  }
+  html[data-skin="obs"] .topActions .hubBack .hbLbl{ display:none; }
+}
+@media print{ html[data-skin="obs"] .topActions .hubBack{ display:none !important; } }
+</style>
+</head>
+<body>
+<div id="gateCurtain" aria-hidden="true" style="position:fixed;top:0;left:-50%;width:200%;height:100%;z-index:100000;pointer-events:none;display:flex;transform:skewX(-15deg) translateX(0);will-change:transform"><i style="flex:1;height:100%;transform:scaleX(1.1);background:#c82337"></i><i style="flex:1;height:100%;transform:scaleX(1.1);background:#e06236"></i><i style="flex:1;height:100%;transform:scaleX(1.1);background:#d7ab61"></i><i style="flex:1;height:100%;transform:scaleX(1.1);background:#2f4c79"></i></div>
+
+
+<!-- ======================= 程序化地形背景（observatory.js 绘制） ======================= -->
+<canvas id="topoCanvas" aria-hidden="true"></canvas>
+
+<!-- ======================= 四色幕布转场 ======================= -->
+<div class="curtain" id="curtain" aria-hidden="true">
+  <i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i>
+</div>
+
+<!-- ======================= 启动终端（首次进入；JS 失败时 2.8s 自动收起） ======================= -->
+<div id="boot" class="boot" aria-hidden="true">
+  <div class="bootWatermark" aria-hidden="true">PSY1020</div>
+  <div class="bootInner">
+    <div class="bootHead"><span>PSY1020 // OBSERVATORY</span><span>BOOT_SEQUENCE // 50</span></div>
+    <div class="bootLog bootTerm" id="bootLog"></div>
+    <div class="bootBar"><i></i></div>
+    <div class="bootHint"><span>DEEP-SPACE OBSERVATORY · 深空天文台</span><span>CLICK / ANY KEY TO SKIP <span class="cursor">▌</span></span></div>
+  </div>
+</div>
+
+<div id="app" class="app">
+
+  <!-- ======================= 左：观测站侧栏 ======================= -->
+  <aside id="sidebar" class="sidebar" aria-label="课程导航">
+    <a class="brand" href="#/" title="回到总览（初始页面）" aria-label="回到总览">
+      <span class="brandMark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img" aria-label="PSY1020 · OBSERVATORY">
+          <g fill="none" stroke="#FFFFFF" stroke-width="1.6">
+            <circle cx="24" cy="24" r="6.4" fill="#FFFFFF" stroke="none"/>
+            <ellipse cx="24" cy="24" rx="20" ry="7.2" opacity=".62" transform="rotate(-20 24 24)"/>
+            <circle cx="24" cy="24" r="13.5" opacity=".34"/>
+          </g>
+          <path d="M24 1.5v4M24 42.5v4M1.5 24h4M42.5 24h4" stroke="#FFFFFF" stroke-width="1" opacity=".5"/>
+        </svg>
+      </span>
+      <span class="tt">
+        <span class="t">PSY1020<span class="tzh">心理</span></span>
+        <span class="s">PSY1020 · Statistics for Psychology</span>
+      </span>
+    </a>
+
+    <div class="sysPanel" role="group" aria-label="系统状态">
+      <div class="sysRow"><span class="sysK">SYS</span><span class="sysV">PSY1020</span></div>
+      <div class="sysRow"><span class="sysK">MODE</span><span class="sysV">统计 · 静态示例</span></div>
+      <div class="sysRow"><span class="sysK">LINK</span><span class="sysV" id="sysLink"><i class="led" aria-hidden="true"></i>ONLINE</span></div>
+      <div class="sysRow"><span class="sysK">REV</span><span class="sysV" id="footVer">1.0.0</span></div>
+    </div>
+
+    <nav class="nav" id="nav" aria-label="课程导航"></nav>
+
+    <div class="sideFoot">
+      <div class="sideTools" id="sideTools" aria-label="快捷入口"></div>
+      <button class="iconBtn" id="helpBtn" title="使用说明" aria-label="使用说明"></button>
+      <span class="footTag">PSY1020</span>
+    </div>
+  </aside>
+
+  <!-- ======================= 主观测区 ======================= -->
+  <div class="main" id="main">
+    <header class="topbar">
+      <button class="iconBtn onlyMobile" id="menuBtn" aria-label="目录" aria-expanded="false" aria-controls="sidebar"></button>
+
+      <div class="gauge" id="modTag">
+        <div class="gaugeMain">
+          <span class="gaugeK">MODULE</span>
+          <span class="gaugeNum" id="modNum">00</span>
+        </div>
+        <div class="gaugeSide">
+          <span class="gaugeK">CURRENT</span>
+          <span class="gaugeName" id="modName">OVERVIEW</span>
+        </div>
+      </div>
+
+      <div class="searchWrap">
+        <span class="searchIcon" aria-hidden="true"></span>
+        <input id="q" type="search" placeholder="QUERY // 搜索本站章节、术语与题目" autocomplete="off" spellcheck="false" aria-label="搜索">
+        <kbd class="kbd searchKbd">/</kbd>
+      </div>
+
+      <div class="topActions">
+        <a class="hubBack" id="hubBack" href="../../index.html" title="返回学习中心 · 深空观测台（OBSERVATORY）" aria-label="返回学习中心 · 深空观测台">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="M11 18l-6-6 6-6"/></svg>
+          <span class="hbLbl">返回观测台</span>
+        </a>
+        <button class="pillBtn" id="manualBtn" title="操作手册" aria-label="操作手册"><span class="dot"></span><span class="lbl">MANUAL</span></button>
+      </div>
+    </header>
+
+    <div class="body">
+      <div class="contentWrap" id="contentWrap">
+        <div id="results" class="results" hidden></div>
+        <main id="content" class="content" tabindex="-1"></main>
+      </div>
+
+      <aside class="rail" id="rail" aria-label="本章目录"></aside>
+    </div>
+  </div>
+
+  <div id="scrim" class="scrim"></div>
+
+  <!-- ======================= 右侧四色色标 ======================= -->
+  <div class="edgebar" aria-hidden="true">
+    <i class="s1"></i><i class="s2"></i><i class="s3"></i><i class="s4"></i>
+  </div>
+</div>
+
+<button id="toTop" class="toTop" type="button" aria-label="返回顶部" title="返回顶部">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+</button>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="modal" class="modal" role="dialog" aria-modal="true" aria-label="对话框" hidden></div>
+
+<!-- 顺序很重要：observatory.js（签名组件）→ app.js（框架）→ data/index.js（章节清单） -->
+<script src="data/site.js?v=20261121n8"></script>
+<script src="assets/observatory.js?v=20261121n8"></script>
+<script src="assets/app.js?v=20261121n8"></script>
+<script src="data/index.js?v=20261121n8"></script>
+<script src="assets/motion.js?v=20261121n8"></script>
+<script>
+/* 启动遮罩兜底：JS 组件缺失或出错时，2.8 秒后强制收起 */
+setTimeout(function () {
+  var b = document.getElementById('boot');
+  if (!b || b.classList.contains('done')) return;
+  b.classList.add('done');
+  setTimeout(function () { if (b && b.parentNode) b.parentNode.removeChild(b); }, 600);
+}, 2800);
+/* PWA：http(s) 下注册 service worker，离线可用；file:// 双击打开时浏览器不允许注册，静默跳过 */
+if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+  function showUpdateBar() {
+    if (document.getElementById('swUpdateBar')) return;
+    var bar = document.createElement('div');
+    bar.id = 'swUpdateBar';
+    bar.textContent = '已有新版本 · 点击刷新';
+    bar.setAttribute('role', 'status');
+    bar.style.cssText = 'position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:99999;' +
+      'padding:9px 16px;background:#0e141f;border:1px solid #d7ab61;color:#e8eef7;' +
+      'font:11px/1.4 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em;cursor:pointer;' +
+      'box-shadow:0 6px 24px rgba(0,0,0,.5)';
+    bar.addEventListener('click', function () { location.reload(); });
+    document.body.appendChild(bar);
+    setTimeout(function () { if (bar.parentNode) bar.parentNode.removeChild(bar); }, 20000);
+  }
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').then(function (reg) {
+      if (reg.waiting && navigator.serviceWorker.controller) showUpdateBar();
+      reg.addEventListener('updatefound', function () {
+        var w = reg.installing;
+        if (!w) return;
+        w.addEventListener('statechange', function () {
+          if (w.state === 'installed' && navigator.serviceWorker.controller) showUpdateBar();
+        });
+      });
+    }).catch(function () {});
+    navigator.serviceWorker.addEventListener('message', function (e) {
+      if (e.data && e.data.type === 'sw:updated' && navigator.serviceWorker.controller) showUpdateBar();
+    });
+  });
+}
+</script>
+<script>
+/* 入场幕布：接住观测台的四色过场，双层 rAF 确保已绘制一帧后再滑出 */
+(function(){
+  var c = document.getElementById('gateCurtain');
+  if (!c) return;
+  function remove(){ try{ if (c && c.parentNode) c.parentNode.removeChild(c); }catch(e){} }
+  function out(){
+    try{
+      c.style.transition = 'transform .5s cubic-bezier(.7,0,.3,1)';
+      c.style.transform = 'skewX(-15deg) translateX(100%)';
+    }catch(e){}
+    setTimeout(remove, 620);
+  }
+  requestAnimationFrame(function(){ requestAnimationFrame(out); });
+  setTimeout(remove, 3000); /* 兜底：任何异常都不会把幕布留在屏幕上 */
+})();
+</script>
+
+<!-- ============ 返回学习中心：四色幕布压屏后跳转 ============ -->
+<script>
+/* 「返回观测台」：与观测台进入子站同一套四色幕布转场。
+   <a> 本身可直达，JS 只负责过渡；修饰键点击 / 减少动态效果时走浏览器默认行为。
+   若单独以子站目录起服务器（目标会解析回自身），说明没有观测台，隐藏按钮。 */
+(function () {
+  var btn = document.getElementById('hubBack');
+  if (!btn) return;
+  var href = btn.getAttribute('href');
+  try {
+    var probe = document.createElement('a');
+    probe.href = href;
+    function norm(u) { return String(u).replace(/index\.html$/, '').split('#')[0]; }
+    if (norm(probe.href) === norm(location.href)) { btn.style.display = 'none'; return; }
+  } catch (e) { /* 解析失败就按默认显示 */ }
+  btn.addEventListener('click', function (e) {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var curtain = document.getElementById('curtain');
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!href || !curtain || reduce) return;
+    e.preventDefault();
+    curtain.classList.remove('out');
+    curtain.classList.add('on', 'in');
+    /* 与 hub.js 的进入动画一致：.46s 幕布到位 + 100ms 停留再导航 */
+    setTimeout(function () { window.location.href = href; }, 560);
+  });
+})();
+</script>
+</body>
+</html>
