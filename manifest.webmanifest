@@ -1,0 +1,68 @@
+{
+  "name": "深空观测台 · 66 门课程",
+  "short_name": "观测台",
+  "description": "六门旗舰课程围绕同一颗核心运转，另外 60 门本科课程按 12 个院系收进「全部课程」目录。支持跨课搜索与离线使用。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "index.html",
+  "scope": "./",
+  "id": "./index.html",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "any",
+  "background_color": "#090d14",
+  "theme_color": "#090d14",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "shared/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "shared/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "shared/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Java 导论",
+      "short_name": "JAVA",
+      "url": "sites/java-intro/index.html"
+    },
+    {
+      "name": "Java 实验",
+      "short_name": "LAB",
+      "url": "sites/csc1004/index.html"
+    },
+    {
+      "name": "微积分",
+      "short_name": "CALC",
+      "url": "sites/calculus/index.html"
+    },
+    {
+      "name": "线性代数",
+      "short_name": "LA",
+      "url": "sites/linear-algebra/index.html"
+    },
+    {
+      "name": "Python 导论",
+      "short_name": "PY",
+      "url": "sites/python-intro/index.html"
+    },
+    {
+      "name": "C 语言与系统",
+      "short_name": "C",
+      "url": "sites/c-intro/index.html"
+    }
+  ]
+}

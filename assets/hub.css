@@ -1,0 +1,514 @@
+/* =====================================================================
+ * hub.css · 深空观测台 · 门户皮肤层
+ * 延续三站 NASA-Punk Observatory 视觉语言：直角、1px 细线、mono 读数、
+ * Jura × Roboto Mono、深空底 #090d14。本页只负责 HUD 与入口，天体由 WebGL 绘制。
+ *
+ * 2026-11-12 改版要点：
+ *  - 布局由「固定铺满 + overflow:hidden」改为「正常文档流 + 纵向可滚动」，
+ *    矮屏/小屏不再把第 5、6 张课程卡裁到视口外；桌面视觉不变。
+ *  - HUD 读数换成真实数据（课程 / 章节 / 题目 / 模拟卷），mono 小字全部 ≥11px。
+ *  - 新增搜索 / 使用说明 / 静止模式 / 安装入口、跳过链接、轻提示。
+ * ===================================================================== */
+
+/* ------------------------------------------------------------ 字体 */
+/* 首屏只声明并 preload 标题用的 Jura Light；
+   Jura Medium(500)、RobotoMono Light(300)/Regular(400) 由 hub.js 在 window load 后注入，
+   避免 486KB 字体阻塞首屏（见 hub.js 的 loadLateFonts）。 */
+@font-face{font-family:'Jura';src:url('../shared/fonts/Jura-Light.ttf') format('truetype');font-weight:300;font-display:swap}
+
+/* ------------------------------------------------------------ 令牌 */
+:root{
+  --bg:#090d14;
+  --bg2:#0e141f;
+  --line:rgba(59,78,107,.46);
+  --line2:rgba(59,78,107,.78);
+  --text:#eef2f8;
+  --text2:#a2b0c0;
+  --text3:#8795a5;
+  --orange:#e06236;
+  --yellow:#d7ab61;
+  --red:#c82337;
+  --blue:#2f4c79;
+  --ice:#9fc0e2;
+  --cyan:#a7e2e7;
+  --mint:#8fd6b4;
+  --violet:#b9a8e8;
+  --ok:#9dbd8a;
+  --font:'Jura','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans SC','Segoe UI',system-ui,sans-serif;
+  --mono:'RobotoMono',ui-monospace,'SF Mono','Cascadia Code',Consolas,monospace;
+  --cjk:'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans SC',sans-serif;
+  --ease:cubic-bezier(.16,.84,.28,1);
+  --pad-x:clamp(14px,4.6vw,72px);
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%;margin:0}
+body{
+  min-height:100vh;margin:0;
+  background:radial-gradient(120% 90% at 62% 46%,#111a29 0%,#0a101a 42%,#05070c 100%);
+  color:var(--text);
+  font-family:var(--font);
+  overflow-x:hidden;
+  overflow-y:auto;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  cursor:crosshair;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(59,78,107,.7) transparent;
+}
+body::-webkit-scrollbar{width:10px;height:10px}
+body::-webkit-scrollbar-thumb{background:rgba(59,78,107,.6);border:2px solid #090d14}
+body::-webkit-scrollbar-track{background:transparent}
+a{color:inherit;text-decoration:none}
+canvas{display:block}
+[hidden]{display:none!important}
+
+/* ------------------------------------------------------------ 跳过链接 */
+.skipLink{
+  position:fixed;left:14px;top:-64px;z-index:90;
+  padding:10px 14px;background:var(--orange);color:#090d14;
+  font-family:var(--mono);font-size:12px;letter-spacing:.1em;font-weight:400;
+  border:1px solid #ffb48a;
+  transition:top .2s var(--ease);
+}
+.skipLink:focus{top:14px;outline:2px solid #fff;outline-offset:2px}
+
+/* ------------------------------------------------------------ 画布层 */
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:1}
+#orbits{position:fixed;inset:0;width:100%;height:100%;z-index:2}
+
+/* WebGL 不可用时的降级天体 */
+body.no-gl::before{
+  content:'';position:fixed;z-index:1;left:var(--core-x,62%);top:var(--core-y,46%);
+  width:var(--core-r,34vmin);height:var(--core-r,34vmin);
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 38% 34%,#fff8e8 0%,#ffd9a0 12%,#ff9a45 30%,#e2551d 52%,#8f1f0b 74%,#3a0a04 100%);
+  box-shadow:0 0 12vmin 4vmin rgba(255,120,40,.35),0 0 40vmin 10vmin rgba(200,60,20,.18);
+  filter:saturate(1.1);
+}
+body.no-gl::after{
+  content:'';position:fixed;z-index:1;left:var(--core-x,62%);top:var(--core-y,46%);
+  width:calc(var(--core-r,34vmin) * 2.6);height:calc(var(--core-r,34vmin) * .62);
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:radial-gradient(closest-side,rgba(255,150,60,.28),rgba(255,110,40,.10) 55%,transparent 78%);
+  filter:blur(6px);
+}
+
+/* ------------------------------------------------------------ 光学叠加 */
+.optics{position:fixed;inset:0;z-index:3;pointer-events:none}
+.opticsGrain{
+  position:absolute;inset:-40%;
+  background-image:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  opacity:.034;mix-blend-mode:overlay;
+  /* 原为 5s steps(3) 跳变 → 每 1.67 秒整屏跳一次，是"规律闪烁"的主因。
+     改为 34s 连续线性微移：几乎察觉不到，但保留颗粒的活性。 */
+  animation:grainShift 34s linear infinite;
+  will-change:transform;
+}
+@keyframes grainShift{
+  0%{transform:translate3d(0,0,0)}
+  25%{transform:translate3d(-1.1%,.7%,0)}
+  50%{transform:translate3d(.8%,-.5%,0)}
+  75%{transform:translate3d(-.4%,-.9%,0)}
+  100%{transform:translate3d(0,0,0)}
+}
+.opticsScan{
+  position:absolute;inset:0;
+  background:repeating-linear-gradient(to bottom,rgba(159,192,226,.045) 0 1px,transparent 1px 3px);
+  opacity:.5;
+}
+.opticsVignette{
+  position:absolute;inset:0;
+  background:
+    linear-gradient(180deg,rgba(3,5,9,.80) 0%,rgba(3,5,9,.28) 9%,transparent 16%),
+    linear-gradient(90deg,rgba(3,5,9,.94) 0%,rgba(3,5,9,.74) 16%,rgba(3,5,9,.32) 34%,rgba(3,5,9,.05) 48%,transparent 56%),
+    linear-gradient(0deg,rgba(3,5,9,.96) 0%,rgba(3,5,9,.68) 12%,rgba(3,5,9,.12) 25%,transparent 36%),
+    radial-gradient(ellipse 78% 78% at 50% 48%,transparent 42%,rgba(3,5,9,.48) 82%,rgba(2,3,6,.84) 100%);
+}
+
+/* 跟随光标的观测十字 */
+.opticsCrosshair{
+  position:absolute;left:0;top:0;width:0;height:0;
+  opacity:0;transition:opacity .5s var(--ease);
+  will-change:transform;
+}
+body.has-pointer.is-live .opticsCrosshair{opacity:1}
+.opticsCrosshair .chx,.opticsCrosshair .chy{position:absolute;background:rgba(159,192,226,.5)}
+.opticsCrosshair .chx{left:-46px;top:0;width:92px;height:1px;
+  background:linear-gradient(to right,transparent,rgba(159,192,226,.55) 18%,rgba(159,192,226,.55) 82%,transparent)}
+.opticsCrosshair .chy{top:-46px;left:0;height:92px;width:1px;
+  background:linear-gradient(to bottom,transparent,rgba(159,192,226,.55) 18%,rgba(159,192,226,.55) 82%,transparent)}
+.opticsCrosshair::after{
+  content:'';position:absolute;left:-3px;top:-3px;width:6px;height:6px;
+  border:1px solid rgba(215,171,97,.75);transform:rotate(45deg);
+}
+
+/* 视野刻度环 */
+.reticle{position:absolute;left:50%;top:50%;width:min(78vmin,760px);height:min(78vmin,760px);transform:translate(-50%,-50%);opacity:.14}
+.rTick{position:absolute;background:var(--ice)}
+.rTick.t1,.rTick.t2,.rTick.t3,.rTick.t4{width:1px;height:10px;left:50%;margin-left:-.5px}
+.rTick.t1{top:0}.rTick.t2{bottom:0}
+.rTick.t5,.rTick.t6,.rTick.t7,.rTick.t8{height:1px;width:10px;top:50%;margin-top:-.5px}
+.rTick.t5{left:0}.rTick.t6{right:0}
+.rTick.t3{top:0;left:18%}.rTick.t4{top:0;left:82%}
+
+/* ------------------------------------------------------------ 点火序列 */
+.ignition{
+  position:fixed;inset:0;z-index:40;
+  display:grid;place-items:center;
+  background:#05070c;
+  transition:opacity 1.6s var(--ease),visibility 1.6s;
+}
+.ignition.done{opacity:0;visibility:hidden;pointer-events:none}
+.ignition.done .ignCore{opacity:0;transform:translateY(-8px);transition:opacity .18s linear,transform .18s linear}
+.ignCore{width:min(560px,74vw);text-align:center;transform:translateY(-2vh)}
+.ignKicker{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.42em;color:var(--text3);
+  text-transform:uppercase;
+}
+.ignKicker span{display:block;width:34px;height:1px;background:var(--line2)}
+.ignName{
+  margin:22px 0 30px;
+  font-family:var(--font);font-weight:300;
+  font-size:clamp(34px,6.4vw,72px);letter-spacing:.34em;text-indent:.34em;
+  color:var(--text);
+  animation:ignBreath 4.2s ease-in-out infinite;
+}
+@keyframes ignBreath{0%,100%{opacity:.86;letter-spacing:.34em}50%{opacity:1;letter-spacing:.38em}}
+.ignLine{display:flex;align-items:center;gap:14px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--text3)}
+.ignLbl{white-space:nowrap;min-width:150px;text-align:right}
+.ignBar{flex:1;height:1px;background:rgba(59,78,107,.5);position:relative;overflow:hidden}
+.ignBar i{position:absolute;inset:0;transform-origin:left;transform:scaleX(0);background:linear-gradient(90deg,var(--blue),var(--orange));transition:transform .3s linear}
+.ignPct{min-width:26px;text-align:left;color:var(--ice)}
+.ignHint{margin-top:30px;font-family:var(--mono);font-size:11px;letter-spacing:.26em;color:rgba(135,149,165,.7)}
+
+/* ------------------------------------------------------------ HUD 骨架 */
+/* 正常文档流：内容不足一屏时 HUD 仍铺满视口；内容超出时整页纵向滚动，
+   不再用 position:fixed + overflow:hidden 把底部课程卡裁掉。 */
+.hud{
+  position:relative;z-index:10;
+  min-height:100vh;min-height:100dvh;
+  display:grid;
+  grid-template-columns:1fr;
+  grid-template-rows:auto 1fr auto;
+  pointer-events:none;
+}
+.hudMain{display:flex;flex-direction:column;min-height:0}
+.hud a,.hud button{pointer-events:auto}
+
+/* —— 顶部 —— */
+.hudTop{
+  grid-row:1;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:clamp(14px,2vw,24px);flex-wrap:wrap;
+  padding:clamp(16px,3.4vh,34px) var(--pad-x) 0;
+}
+.brand{display:flex;align-items:center;gap:14px;
+  opacity:0;transform:translateY(-8px);transition:opacity 1s var(--ease),transform 1s var(--ease)}
+body.is-live .brand{opacity:1;transform:none}
+.brand:focus-visible{outline:1px solid var(--orange);outline-offset:4px}
+.brandMark{display:block;width:34px;height:34px;color:var(--orange)}
+.brandMark svg{width:100%;height:100%;display:block}
+.brandText{display:flex;flex-direction:column;gap:3px;line-height:1}
+.brandText b{font-family:var(--font);font-weight:500;font-size:14px;letter-spacing:.3em}
+.brandText i{font-family:var(--mono);font-style:normal;font-size:11px;letter-spacing:.18em;color:var(--text3)}
+
+.hudRight{display:flex;align-items:flex-start;gap:clamp(16px,2.4vw,36px);flex-wrap:wrap;justify-content:flex-end}
+.hudRead{display:flex;gap:clamp(14px,2.2vw,34px);
+  opacity:0;transform:translateY(-8px);transition:opacity 1s var(--ease) .1s,transform 1s var(--ease) .1s}
+body.is-live .hudRead{opacity:1;transform:none}
+.hr{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.hr em{font-family:var(--mono);font-style:normal;font-size:11px;letter-spacing:.2em;color:var(--text3)}
+.hr b{font-family:var(--mono);font-weight:400;font-size:12px;letter-spacing:.08em;color:var(--text2);display:flex;align-items:center;gap:6px}
+.led{width:5px;height:5px;background:var(--ok);box-shadow:0 0 6px rgba(157,189,138,.9);display:inline-block;animation:ledPulse 7s ease-in-out infinite}
+@keyframes ledPulse{0%,100%{opacity:.72}50%{opacity:1}}
+
+/* HUD 功能入口 */
+.hudActions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  opacity:0;transform:translateY(-8px);transition:opacity 1s var(--ease) .18s,transform 1s var(--ease) .18s}
+body.is-live .hudActions{opacity:1;transform:none}
+.hudBtn{
+  display:inline-flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;color:var(--text2);
+  background:rgba(9,13,20,.55);border:1px solid var(--line);
+  padding:7px 11px;cursor:pointer;white-space:nowrap;text-decoration:none;
+  transition:border-color .3s var(--ease),color .3s var(--ease),background .3s var(--ease);
+}
+.hudBtn:hover{border-color:var(--line2);color:var(--text);background:rgba(20,29,43,.72)}
+.hudBtn:focus-visible{outline:1px solid var(--orange);outline-offset:2px;border-color:var(--orange);color:var(--text)}
+.hudBtn[aria-pressed="true"]{border-color:var(--orange);color:var(--orange);background:rgba(224,98,54,.12)}
+.hudBtn kbd{font-family:var(--mono);font-size:11px;color:var(--text3);border:1px solid var(--line);padding:0 4px;margin-left:5px}
+
+/* —— 主视觉：太阳系画布由 #sky + #orbits 铺满视口，HUD 只留顶栏与底栏 —— */
+/* —— 左侧主视觉：大标题 / 导语 / 四项统计 —— */
+.hero{
+  flex:1 1 auto;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:0 var(--pad-x);
+  max-width:min(560px,38vw);
+  margin-top:-3vh;
+}
+.kicker{
+  display:flex;align-items:center;gap:11px;margin:0 0 20px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.3em;color:var(--orange);
+  text-transform:uppercase;
+}
+.kicker .dash{display:block;width:26px;height:1px;background:var(--orange);opacity:.8}
+.title{margin:0}
+.titleEn{
+  display:block;
+  font-family:var(--font);font-weight:300;
+  font-size:clamp(30px,3.5vw,58px);
+  line-height:1;letter-spacing:.115em;
+  color:var(--text);
+  text-shadow:0 0 46px rgba(224,98,54,.22);
+}
+.titleZh{
+  display:block;margin-top:16px;
+  font-family:var(--cjk);font-weight:300;
+  font-size:clamp(15px,1.5vw,21px);
+  letter-spacing:.46em;color:var(--text2);
+}
+.lede{
+  margin:26px 0 0;
+  font-family:var(--cjk);font-size:13.5px;line-height:2.05;
+  color:var(--text2);letter-spacing:.02em;
+  text-shadow:0 1px 2px rgba(4,6,11,.9),0 0 18px rgba(4,6,11,.75);
+}
+.lede b{color:var(--text);font-weight:400}
+
+.stats{display:flex;gap:clamp(20px,3vw,42px);margin:30px 0 0;padding:0}
+.stat{display:flex;flex-direction:column;gap:6px;position:relative}
+.stat b{font-family:var(--mono);font-weight:300;font-size:22px;letter-spacing:.06em;color:var(--text);white-space:nowrap}
+.stat i{font-family:var(--mono);font-style:normal;font-size:11px;letter-spacing:.16em;color:var(--text3);white-space:nowrap}
+
+/* 入场动画：逐级点亮 */
+.hero > *{opacity:0;transform:translateY(16px);
+  transition:opacity .9s var(--ease),transform .9s var(--ease)}
+body.is-live .hero > *{opacity:1;transform:none}
+body.is-live .hero > *:nth-child(1){transition-delay:.05s}
+body.is-live .hero > *:nth-child(2){transition-delay:.14s}
+body.is-live .hero > *:nth-child(3){transition-delay:.26s}
+body.is-live .hero > *:nth-child(4){transition-delay:.38s}
+
+/* 只给屏幕阅读器看的补充说明 */
+.srOnly{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+}
+
+/* —— 底部状态条：真实数据 —— */
+.hudBottom{
+  display:flex;align-items:center;gap:clamp(14px,2.4vw,38px);flex-wrap:wrap;
+  padding:12px var(--pad-x) 14px;
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;color:var(--text3);
+  opacity:0;transition:opacity 1.2s var(--ease) .5s;
+}
+body.is-live .hudBottom{opacity:1}
+.fb{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.fb em{font-style:normal;color:var(--text3)}
+.fb b{font-weight:400;font-size:12px;color:var(--text);letter-spacing:.08em}
+.fbHint{margin-left:auto;color:rgba(135,149,165,.78);letter-spacing:.14em}
+.fbLink{
+  color:var(--ice);text-decoration:none;letter-spacing:.12em;
+  border-bottom:1px solid rgba(159,192,226,.42);padding-bottom:1px;
+  transition:color .3s var(--ease),border-color .3s var(--ease)
+}
+.fbLink:hover,.fbLink:focus-visible{color:var(--cyan);border-color:var(--cyan);outline:none}
+
+/* ------------------------------------------------------------ 对话框（搜索 / 使用说明） */
+.dlg{
+  border:1px solid var(--line2);
+  background:rgba(9,13,20,.97);
+  color:var(--text);
+  padding:0;
+  width:min(720px,94vw);
+  max-height:88vh;
+  box-shadow:0 24px 80px rgba(0,0,0,.65);
+}
+.dlg::backdrop{background:rgba(3,5,9,.84)}
+.dlgPanel{
+  padding:clamp(16px,3vw,26px);
+  display:flex;flex-direction:column;gap:14px;
+  max-height:88vh;overflow-y:auto;
+  scrollbar-width:thin;
+}
+.dlgHead{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.dlgHead h2{margin:0;font-family:var(--font);font-weight:500;font-size:16px;letter-spacing:.18em}
+.dlgClose{
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;color:var(--text2);
+  background:none;border:1px solid var(--line);padding:6px 10px;cursor:pointer;white-space:nowrap;
+  transition:border-color .3s,color .3s;
+}
+.dlgClose:hover{color:var(--text);border-color:var(--line2)}
+.dlgClose:focus-visible{outline:1px solid var(--orange);outline-offset:2px}
+
+.srInput{
+  width:100%;font-family:var(--mono);font-size:16px;color:var(--text);
+  background:rgba(14,20,31,.85);border:1px solid var(--line2);border-left:2px solid var(--orange);
+  padding:12px 14px;outline:none;
+}
+.srInput::placeholder{color:var(--text3)}
+.srInput:focus{border-color:var(--orange);box-shadow:0 0 0 1px rgba(224,98,54,.35)}
+.srHint{margin:0;font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--text3)}
+.srList{list-style:none;margin:0;padding:0;overflow-y:auto;max-height:48vh;border-top:1px solid var(--line);scrollbar-width:thin}
+.srItem{
+  display:flex;align-items:baseline;gap:9px;padding:10px 12px;
+  border-bottom:1px solid rgba(59,78,107,.3);
+  transition:background .2s var(--ease);
+}
+.srItem:hover{background:rgba(159,192,226,.09)}
+.srItem:focus-visible{outline:none;background:rgba(159,192,226,.11);box-shadow:inset 0 0 0 1px var(--orange)}
+.srItem.is-active{background:rgba(159,192,226,.13);box-shadow:inset 2px 0 0 var(--orange)}
+.srCourse{
+  flex:0 0 auto;max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--text3);
+}
+.srSep{flex:0 0 auto;color:var(--text3);opacity:.6}
+.srTitle{flex:1 1 auto;min-width:0;font-family:var(--cjk);font-size:13.5px;line-height:1.55;color:var(--text)}
+.srEmpty,.srCount{margin:0;font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;color:var(--text3)}
+.srCount{color:var(--text3)}
+
+.helpBody{display:flex;flex-direction:column;gap:4px}
+.helpBody h3{
+  margin:12px 0 2px;font-family:var(--mono);font-weight:400;font-size:11.5px;
+  letter-spacing:.18em;color:var(--orange);text-transform:uppercase;
+}
+.helpBody p{margin:0;font-family:var(--cjk);font-size:13.5px;line-height:1.95;color:var(--text2)}
+.helpBody b{color:var(--text);font-weight:400}
+.helpBody code{font-family:var(--mono);font-size:12px;color:var(--ice);background:rgba(159,192,226,.08);padding:1px 5px}
+.helpFoot{margin:6px 0 0;padding-top:12px;border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--text3);display:flex;gap:10px;flex-wrap:wrap}
+.helpFoot a{color:var(--ice);border-bottom:1px solid rgba(159,192,226,.4)}
+.helpFoot a:hover{color:var(--text);border-bottom-color:var(--orange)}
+.helpFoot a:focus-visible{outline:1px solid var(--orange);outline-offset:3px}
+
+/* ------------------------------------------------------------ 轻提示 */
+.toast{
+  position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:80;
+  display:flex;align-items:center;gap:14px;
+  padding:10px 14px;max-width:min(600px,92vw);
+  background:rgba(14,20,31,.96);border:1px solid var(--line2);border-left:2px solid var(--orange);
+  font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--text);
+  box-shadow:0 14px 40px rgba(0,0,0,.5);
+}
+.toastAct{
+  font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--orange);
+  background:none;border:1px solid rgba(224,98,54,.55);padding:4px 9px;cursor:pointer;white-space:nowrap;
+}
+.toastAct:hover{border-color:var(--orange);background:rgba(224,98,54,.12)}
+.toastAct:focus-visible{outline:1px solid var(--orange);outline-offset:2px}
+.toastClose{background:none;border:0;color:var(--text3);font-size:18px;line-height:1;cursor:pointer;padding:0 2px}
+.toastClose:hover{color:var(--text)}
+.toastClose:focus-visible{outline:1px solid var(--orange);outline-offset:2px}
+
+/* ------------------------------------------------------------ 四色幕布过场 */
+/* 与三个子站完全同一套转场语言：斜切 -15°、200% 宽、红橙黄蓝四色、
+   0.46s 压屏 / 0.5s 离场。门户在压屏完成时跳转，子站先压屏再换内容。 */
+.curtain{
+  position:fixed;top:0;left:-50%;width:200%;height:100%;
+  z-index:60;pointer-events:none;
+  display:flex;
+  transform:skewX(-15deg) translateX(-100%);
+  visibility:hidden;
+  will-change:transform;
+}
+.curtain.on{visibility:visible}
+.curtain i{
+  flex:1;height:100%;
+  transform:scaleX(1.1);
+  position:relative;
+}
+.curtain i + i{box-shadow:-1px 0 0 rgba(238,242,248,.22)}
+.curtain .c1{background:var(--red)}
+.curtain .c2{background:var(--orange)}
+.curtain .c3{background:var(--yellow)}
+.curtain .c4{background:var(--blue)}
+/* 幕布上的极淡扫描线，延续观测台 CRT 质感 */
+.curtain::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(to bottom,rgba(4,7,12,.045) 0 1px,transparent 1px 3px);
+}
+.curtain.in{animation:curtain-in .46s cubic-bezier(.7,0,.3,1) forwards}
+.curtain.out{animation:curtain-out .5s cubic-bezier(.7,0,.3,1) forwards}
+
+@keyframes curtain-in{
+  from{transform:skewX(-15deg) translateX(-100%)}
+  to{transform:skewX(-15deg) translateX(0%)}
+}
+@keyframes curtain-out{
+  from{transform:skewX(-15deg) translateX(0%)}
+  to{transform:skewX(-15deg) translateX(100%)}
+}
+
+/* ------------------------------------------------------------ 响应式 */
+@media (max-width:1080px){
+  .hero{max-width:min(500px,44vw)}
+}
+@media (max-width:860px){
+  .hudTop{padding-top:14px}
+  .hudRead{display:none}
+  .hero{
+    flex:0 0 auto;justify-content:flex-start;
+    max-width:none;margin-top:clamp(10px,3vh,26px);padding-right:var(--pad-x);
+  }
+  .kicker{margin-bottom:10px;font-size:11px;letter-spacing:.24em}
+  .titleEn{font-size:clamp(24px,6.1vw,34px);letter-spacing:.09em}
+  .titleZh{font-size:13px;letter-spacing:.32em;margin-top:9px}
+  .lede{display:none}
+  .stats{margin-top:14px;gap:18px}
+  .stat b{font-size:18px}
+  .stat i{font-size:11px}
+  .hudBottom{flex-wrap:wrap;gap:10px 16px;padding-bottom:14px}
+  .fbHint{display:none}
+}
+@media (max-width:640px){
+  .brandText i{display:none}
+  .brandText b{font-size:13px;letter-spacing:.2em}
+  .hudBtn{padding:6px 9px;font-size:11px}
+  .hudBtn kbd{display:none}
+  .hudRight{gap:10px}
+}
+@media (max-width:520px){
+  :root{--pad-x:14px}
+  .hudTop{gap:10px;padding-top:12px}
+  .brand{gap:10px}
+  .brandMark{width:30px;height:30px}
+  .brandText b{font-size:12px;letter-spacing:.14em}
+  .hudActions{gap:6px}
+  .hudBtn{font-size:11px;padding:6px 8px}
+  #installBtn{display:none}
+  .kicker{font-size:10px;letter-spacing:.16em;gap:8px}
+  .titleEn{font-size:clamp(21px,7vw,26px);letter-spacing:.05em}
+  .titleZh{font-size:12px;letter-spacing:.28em;margin-top:8px}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin-top:16px;max-width:250px}
+  .stat b{font-size:19px}
+  .stat i{font-size:10px;letter-spacing:.03em}
+  .hudBottom{gap:8px 12px;font-size:11px}
+  .fb b{font-size:11.5px}
+  .dlg{width:96vw}
+  .srCourse{max-width:36%}
+}
+
+/* 矮屏（含笔记本小窗口）：压缩顶栏留白 */
+@media (max-height:700px) and (min-width:861px){
+  .hero{margin-top:0}
+  .lede{margin-top:14px;line-height:1.8}
+  .stats{margin-top:16px}
+  .titleZh{margin-top:12px}
+  .hudTop{padding-top:16px}
+}
+
+
+/* ------------------------------------------------------------ 无障碍 / 减少动态 */
+body.static .opticsGrain,
+body.static .led,
+body.static .ignName{animation:none}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .opticsGrain,.led,.ignName{animation:none!important}
+}

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-state="boot">
+<head>
+<meta charset="utf-8">
+<style>html,body{margin:0;background:#090d14;color-scheme:dark}</style>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OBSERVATORY · 深空观测台</title>
+<meta name="description" content="深空观测台 —— 66 门 CUHK-Shenzhen 课程的学习中心。首页是一张真实太阳系的俯视示意图：水星到海王星依次绕日运行；全部课程按 12 个院系收在「全部课程」目录，支持跨课搜索、离线使用与键盘操作。">
+<meta name="theme-color" content="#090d14">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="shared/icons/icon-192.png">
+<!-- 首屏只 preload 一个字体（标题用的 Jura Light）；其余字重在 window load 后由 hub.js 注入 -->
+<link rel="preload" href="shared/fonts/Jura-Light.ttf" as="font" type="font/ttf" crossorigin>
+<!-- 构建号：改动任何 assets 后请统一改成新 stamp，避免浏览器用缓存的旧版脚本 -->
+<link rel="stylesheet" href="assets/hub.css?v=20261121n32">
+</head>
+<body>
+
+<a class="skipLink" href="#main">跳到主内容</a>
+
+<!-- ══════════ 天体渲染层 ══════════ -->
+<canvas id="sky" aria-hidden="true"></canvas>
+<!-- ══════════ 轨道与行星层 ══════════ -->
+<canvas id="orbits" aria-hidden="true"></canvas>
+
+<!-- 望远镜光学叠加层 -->
+<div class="optics" aria-hidden="true">
+  <div class="opticsGrain"></div>
+  <div class="opticsScan"></div>
+  <div class="opticsVignette"></div>
+  <div class="opticsCrosshair" id="crosshair">
+    <i class="chx"></i><i class="chy"></i>
+  </div>
+  <div class="reticle" aria-hidden="true">
+    <span class="rTick t1"></span><span class="rTick t2"></span>
+    <span class="rTick t3"></span><span class="rTick t4"></span>
+    <span class="rTick t5"></span><span class="rTick t6"></span>
+    <span class="rTick t7"></span><span class="rTick t8"></span>
+  </div>
+</div>
+
+<!-- ══════════ 点火序列（纯装饰，可任意键/点击跳过） ══════════ -->
+<div id="ignition" class="ignition" aria-hidden="true">
+  <div class="ignCore">
+    <div class="ignKicker"><span></span>DEEP FIELD OBSERVATORY</div>
+    <div class="ignName">SOL</div>
+    <div class="ignLine">
+      <span class="ignLbl" id="ignLbl">ACQUIRING TARGET</span>
+      <span class="ignBar"><i id="ignBar"></i></span>
+      <span class="ignPct" id="ignPct">00</span>
+    </div>
+    <div class="ignHint" id="ignHint">CLICK OR PRESS ANY KEY TO SKIP</div>
+  </div>
+</div>
+
+<!-- ══════════ 观测台界面 ══════════ -->
+<div id="hud" class="hud">
+
+  <header class="hudTop">
+    <a class="brand" href="index.html" aria-label="返回深空观测台首页">
+      <span class="brandMark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none">
+          <circle cx="24" cy="24" r="6.5" fill="currentColor"/>
+          <ellipse cx="24" cy="24" rx="21" ry="7.5" stroke="currentColor" stroke-width="1" opacity=".55" transform="rotate(-18 24 24)"/>
+          <circle cx="24" cy="24" r="13" stroke="currentColor" stroke-width=".8" opacity=".32"/>
+          <path d="M24 1v5M24 42v5M1 24h5M42 24h5" stroke="currentColor" stroke-width=".8" opacity=".5"/>
+        </svg>
+      </span>
+      <span class="brandText">
+        <b>OBSERVATORY</b>
+        <i>DEEP FIELD · 深空观测台</i>
+      </span>
+    </a>
+
+    <div class="hudRight">
+      <div class="hudRead">
+        <span class="hr"><em>INDEX</em><b id="idxDate">--</b></span>
+        <span class="hr"><em>STATUS</em><b id="netState"><i class="led" aria-hidden="true"></i><span id="netText">ONLINE</span></b></span>
+      </div>
+      <div class="hudActions">
+        <a class="hudBtn" href="courses.html">全部课程</a>
+        <button class="hudBtn" id="searchBtn" type="button" aria-haspopup="dialog" aria-controls="searchDlg" hidden>搜索<kbd aria-hidden="true">/</kbd></button>
+        <button class="hudBtn" id="helpBtn" type="button" aria-haspopup="dialog" aria-controls="helpDlg">使用说明</button>
+        <button class="hudBtn" id="staticBtn" type="button" aria-pressed="false">静止模式</button>
+        <button class="hudBtn" id="installBtn" type="button" hidden>安装为应用</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="hudMain" id="main">
+    <section class="hero" aria-labelledby="heroTitle">
+      <p class="kicker"><i class="dash" aria-hidden="true"></i>LEARNING CENTER · 66 COURSES</p>
+      <h1 class="title" id="heroTitle">
+        <span class="titleEn">OBSERVATORY</span>
+        <span class="titleZh">深空观测台</span>
+      </h1>
+      <p class="lede">
+        66 门 CUHK-Shenzhen 课程，一门一个学习站。<br>
+        每门课 8 章讲义、56 道分章题、一套限时模拟卷、三个实战项目，<br>
+        再配速查表、术语表、课程航线图与原始资料库。<br>
+        <b>从右上角「全部课程」进去，全部离线可用。</b>
+      </p>
+      <div class="stats">
+        <span class="stat"><b id="statCourses">66</b><i>COURSES 课程</i></span>
+        <span class="stat"><b id="statChapters">582</b><i>CHAPTERS 章节</i></span>
+        <span class="stat"><b id="statQuiz">5181</b><i>QUIZ 题目</i></span>
+        <span class="stat"><b id="statExams">76</b><i>EXAMS 模拟卷</i></span>
+      </div>
+    </section>
+  </main>
+  <footer class="hudBottom">
+    <span class="fb"><em>课程</em><b id="hudCourses">66</b></span>
+    <span class="fb"><em>章节</em><b id="hudChapters">582</b></span>
+    <span class="fb"><em>题目</em><b id="hudQuiz">5181</b></span>
+    <span class="fb"><em>模拟卷</em><b id="hudExams">76</b></span>
+    <a class="fb fbLink" href="courses.html">全部课程目录 →</a>
+    <span class="fb fbHint" id="hint">按 / 跨课搜索 · 全部课程在右上角</span>
+  </footer>
+</div>
+
+<!-- ══════════ 跨课搜索 ══════════ -->
+<dialog class="dlg" id="searchDlg" aria-labelledby="searchTitle">
+  <div class="dlgPanel">
+    <div class="dlgHead">
+      <h2 id="searchTitle">跨课搜索</h2>
+      <button class="dlgClose" id="searchClose" type="button" aria-label="关闭搜索">关闭 ESC</button>
+    </div>
+    <input class="srInput" id="srInput" type="search" autocomplete="off" spellcheck="false"
+      placeholder="搜索章节标题 / 英文名 / 关键词 / 课程名"
+      aria-label="跨课搜索关键词" aria-controls="srResults" aria-describedby="srHint">
+    <p class="srHint" id="srHint">输入关键词即时过滤：582 章 · 66 门课</p>
+    <ul class="srList" id="srResults" aria-label="搜索结果"></ul>
+    <p class="srEmpty" id="srEmpty" hidden>没有匹配结果，换个章节名或英文关键词试试。</p>
+    <p class="srCount" id="srCount" aria-live="polite"></p>
+  </div>
+</dialog>
+
+<!-- ══════════ 使用说明 ══════════ -->
+<dialog class="dlg" id="helpDlg" aria-labelledby="helpTitle">
+  <div class="dlgPanel">
+    <div class="dlgHead">
+      <h2 id="helpTitle">使用说明</h2>
+      <button class="dlgClose" id="helpClose" type="button" aria-label="关闭使用说明">关闭 ESC</button>
+    </div>
+    <div class="helpBody">
+      <h3>太阳系首页</h3>
+      <p>首页是太阳系的俯视示意图：太阳居中，水星、金星、地球、火星、木星、土星、天王星、海王星沿轨道由内向外运行。把鼠标移到行星上，它会稍稍放大。</p>
+      <h3>全部课程（66 门）</h3>
+      <p>点右上角「全部课程」，或在页面底部点「查看全部课程目录」，进入按院系分组的完整清单：<b>66 门课 · 12 个院系</b>。目录页支持按课名、英文名或课号即时搜索，也可以按院系跳转。</p>
+      <h3>跨课搜索</h3>
+      <p>点右上角「搜索」或按 <b>/</b>，输入章节标题、英文名、关键词或课程名即可跨全部课程即时过滤；<b>↑ ↓</b> 选择、<b>Enter</b> 打开、<b>Esc</b> 关闭。</p>
+      <h3>静止模式与减少动态</h3>
+      <p>「静止模式」会停掉恒星与轨道的持续动画，只保留一张静态星图；设置保存在本机（localStorage <code>hub.static</code>）。系统开启「减少动态效果」时默认即静止。</p>
+      <h3>安装为应用与离线</h3>
+      <p>通过本地服务器或网站（http/https）打开时，浏览器会缓存门户页面，断网也能打开；地址栏或右上角「安装为应用」可把它装成独立应用。直接双击 <code>file://</code> 打开同样可以正常学习，但没有离线缓存与安装能力。</p>
+      <h3>学习数据与成绩</h3>
+      <p>本页只展示课程与题库总量（来自 <code>assets/hub-index.js</code>，缺失时使用静态兜底）。每门课的答题与模拟卷成绩保存在该课程自己的浏览器本地存储中，换浏览器或清缓存会丢失。</p>
+    </div>
+    <p class="helpFoot">
+      <a href="使用说明.md">完整说明（Markdown）</a>
+      <span>·</span>
+      <a href="sites/java-intro/index.html">从 Java 导论开始</a>
+    </p>
+  </div>
+</dialog>
+
+<!-- ══════════ 轻提示（离线缓存 / 新版本 / 安装） ══════════ -->
+<div class="toast" id="toast" role="status" aria-live="polite" hidden>
+  <span id="toastMsg"></span>
+  <button class="toastAct" id="toastAct" type="button" hidden>刷新</button>
+  <button class="toastClose" id="toastClose" type="button" aria-label="关闭提示">×</button>
+</div>
+
+<!-- ══════════ 四色幕布过场（与三个子站同一套转场语言） ══════════ -->
+<div class="curtain" id="curtain" aria-hidden="true">
+  <i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i>
+</div>
+
+<noscript>
+  <style>
+    #ignition{display:none}
+    .brand,.hudRead,.hero>*,.hudBottom{opacity:1!important;transform:none!important}
+    .hudActions{display:none}
+  </style>
+</noscript>
+
+<!-- 跨课索引：普通 <script> 引入，file:// 双击也能用（不要改成 fetch） -->
+<script src="assets/hub-index.js?v=20261121n32"></script>
+<script src="assets/sky.js?v=20261121n32"></script>
+<script src="assets/planet.js?v=20261121n32"></script>
+<script src="assets/orbits.js?v=20261121n32"></script>
+<script src="assets/hub.js?v=20261121n32"></script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>html,body{margin:0;background:#090d14;color-scheme:dark}</style>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>全部课程 · 深空观测台</title>
+<meta name="description" content="深空观测台课程总目录：66 门 CUHK-Shenzhen 课程，按院系分为 12 组，每门课都配有完整学习站——分章正文、速查表、分章题库、模拟卷、实战项目与本地资料库。">
+<meta name="theme-color" content="#090d14">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="shared/icons/icon-192.png">
+<link rel="preload" href="shared/fonts/Jura-Light.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="assets/catalog.css?v=20261121n8">
+</head>
+<body>
+
+<div class="sky" aria-hidden="true">
+  <div class="skyGrain"></div>
+  <div class="skyVignette"></div>
+</div>
+
+<a class="skipLink" href="#catalog">跳到课程目录</a>
+
+<header class="top">
+  <a class="brand" href="index.html" aria-label="返回深空观测台首页">
+    <span class="brandMark" aria-hidden="true">
+      <svg viewBox="0 0 48 48" fill="none">
+        <circle cx="24" cy="24" r="6.5" fill="currentColor"/>
+        <ellipse cx="24" cy="24" rx="21" ry="7.5" stroke="currentColor" stroke-width="1" opacity=".55" transform="rotate(-18 24 24)"/>
+        <circle cx="24" cy="24" r="13" stroke="currentColor" stroke-width=".8" opacity=".32"/>
+        <path d="M24 1v5M24 42v5M1 24h5M42 24h5" stroke="currentColor" stroke-width=".8" opacity=".5"/>
+      </svg>
+    </span>
+    <span class="brandText">
+      <b>OBSERVATORY</b>
+      <i>COURSE CATALOG · 全部课程</i>
+    </span>
+  </a>
+
+  <div class="topRight">
+    <span class="topRead"><em>COURSES</em><b id="hudCourses">66</b></span>
+    <span class="topRead"><em>DEPTS</em><b id="hudDepts">12</b></span>
+    <span class="topRead"><em>RESOURCES</em><b id="hudRes">2045</b></span>
+    <a class="backBtn" href="index.html">← 返回观测台</a>
+  </div>
+</header>
+
+<main class="wrap" id="catalog">
+
+  <section class="hero" aria-labelledby="catTitle">
+    <p class="kicker"><i class="dash" aria-hidden="true"></i>66 COURSES · 12 DEPARTMENTS</p>
+    <h1 class="catTitle" id="catTitle">
+      <span class="titleEn">CATALOG</span>
+      <span class="titleZh">全部课程</span>
+    </h1>
+    <p class="lede">
+      CUHK-Shenzhen 的 <b>66 门课程</b>，按院系分成 12 组。<br>
+      每门课都是一个独立的学习站：分章正文、速查表、分章题库、模拟卷、<br>
+      实战项目，以及指向本机原始资料的<b>资料库</b>。
+    </p>
+    <div class="stats" id="stats">
+      <span class="stat"><b data-stat="courses">66</b><i>COURSES 课程</i></span>
+      <span class="stat"><b data-stat="chapters">570</b><i>CHAPTERS 章节</i></span>
+      <span class="stat"><b data-stat="resources">2045</b><i>FILES 原始资料</i></span>
+      <span class="stat"><b data-stat="built">0</b><i>LIVE 已上线</i></span>
+    </div>
+  </section>
+
+  <section class="finder" aria-label="查找课程">
+    <div class="searchBox">
+      <span class="searchIcon" aria-hidden="true">⌕</span>
+      <input id="q" type="search" autocomplete="off" spellcheck="false"
+        placeholder="搜索课程名 / 英文名 / 课号（例如 CSC3050、微观、machine learning）"
+        aria-label="搜索课程" aria-controls="groups">
+      <button class="clearBtn" id="clear" type="button" hidden>清空 ESC</button>
+    </div>
+    <input type="hidden" id="hitBox">
+    <p class="finderHint" id="finderHint">输入关键词即时过滤；按 <kbd>/</kbd> 聚焦搜索框。</p>
+  </section>
+
+  <nav class="chips" id="chips" aria-label="按院系跳转"></nav>
+
+  <div id="groups"></div>
+
+  <p class="empty" id="empty" hidden>
+    没有匹配的课程。换个关键词试试，或 <button class="linkBtn" id="reset" type="button">查看全部课程</button>。
+  </p>
+</main>
+
+<footer class="foot">
+  <span class="fb"><em>课程</em><b id="fbCourses">66</b></span>
+  <span class="fb"><em>院系</em><b id="fbDepts">12</b></span>
+  <span class="fb"><em>章节</em><b id="fbChapters">570</b></span>
+  <span class="fb"><em>资料</em><b id="fbRes">2045</b></span>
+  <span class="fb fbHint">数据来自 _data/courses.json 与 _data/course-files.json</span>
+</footer>
+
+<noscript>
+  <p style="padding:24px;color:#9fc0e2">这个页面需要 JavaScript 渲染课程列表。</p>
+</noscript>
+
+<script src="assets/courses-data.js?v=20261121n8"></script>
+<script src="assets/catalog.js?v=20261121n8"></script>
+</body>
+</html>
