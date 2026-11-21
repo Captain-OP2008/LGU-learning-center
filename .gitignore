@@ -1,0 +1,10 @@
+# 资料库离线副本：由 tools/pack-resources.js 生成，体积约 4.7 GB，不入版本库
+/resources/
+
+# 本机工具与临时文件
+/.tools/
+/.playwright-mcp/
+node_modules/
+*.log
+.DS_Store
+Thumbs.db
