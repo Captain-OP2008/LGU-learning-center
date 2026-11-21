@@ -1,0 +1,503 @@
+/* =====================================================================
+   CSC1003 · OBSERVATORY — 参考类页面外观层
+   负责：#/glossary（术语表）、#/cheatsheet（速查表）、#/map（航线图）、
+        #/debug（Debug 手册）、#/about（使用说明）、⌘K 命令面板、搜索结果下拉
+   约定：
+   · 只写样式，不改 JS / HTML；选择器统一加 `html[data-skin="obs"]` 前缀
+   · 颜色/字号/线宽全部使用 observatory.css 的 CSS 变量，不硬编码新颜色
+   · 直角、1px 细线、无阴影、无填充大色块；读数用 Roboto Mono，标题用 Jura
+   结构：A 术语表 → B 速查表 → C 航线图 → D Debug 手册 → E 使用说明
+        → F 命令面板 → G 搜索结果 → H 响应式
+   ===================================================================== */
+
+/* 页面级样式从下方开始 */
+
+/* ═════════ A · 术语表 #/glossary ═════════
+   A1 统计读数条 · A2 过滤条 · A3 字母分组 · A4 术语卡与来源链接 */
+
+/* A1 旧圆角统计卡 → 观测站读数条：细线分格 + 左上橙刻线 + 机位号 */
+html[data-skin="obs"] .statRow{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0; margin: 26px 0 30px; border: 1px solid var(--line); background: rgba(9, 13, 20, .3); counter-reset: statN; }
+html[data-skin="obs"] .statRow:empty{ display: none; }
+html[data-skin="obs"] .statRow .statCard{
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 88px;
+  padding: 15px 18px 13px;
+  border: 0;
+  border-left: 1px solid var(--line);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  counter-increment: statN;
+}
+html[data-skin="obs"] .statRow .statCard:first-child{ border-left: 0; }
+html[data-skin="obs"] .statRow .statCard::before{ content: ""; position: absolute; left: -1px; top: -1px; width: 14px; height: 1px; background: var(--const-orange); pointer-events: none; }
+html[data-skin="obs"] .statRow .statCard::after{
+  content: "R-" counter(statN, decimal-leading-zero);
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .16em;
+  color: var(--line-color);
+  pointer-events: none;
+}
+html[data-skin="obs"] .statRow .statCard .sv{ font-family: var(--mono); font-weight: 300; font-size: 30px; line-height: 1; letter-spacing: .02em; font-variant-numeric: tabular-nums; color: var(--text-white); }
+html[data-skin="obs"] .statRow .statCard.accent .sv{ color: var(--const-orange); }
+html[data-skin="obs"] .statRow .statCard.cyan .sv{ color: var(--accent2); }
+html[data-skin="obs"] .statRow .statCard.ok .sv{ color: var(--ok); }
+html[data-skin="obs"] .statRow .statCard .sl{ margin-top: 10px; font-family: var(--mono); font-size: 8.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--text3); }
+
+/* A2 过滤条：一条横线夹住的终端输入行，聚焦时底线转橙 */
+html[data-skin="obs"] .glossBar{ display: flex; align-items: center; gap: 14px; margin: 0 0 4px; padding: 9px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+html[data-skin="obs"] .glossBar::before{ content: ""; flex: 0 0 auto; width: 7px; height: 7px; border: 1px solid var(--line2); transform: rotate(45deg); transition: border-color var(--dur); }
+html[data-skin="obs"] .glossBar:focus-within{ border-bottom-color: var(--const-orange); }
+html[data-skin="obs"] .glossBar:focus-within::before{ border-color: var(--const-orange); }
+html[data-skin="obs"] .glossInput{ flex: 1; min-width: 0; height: 28px; padding: 0; border: 0; border-radius: 0; background: none; outline: none; font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em; color: var(--text-white); }
+html[data-skin="obs"] .glossInput::placeholder{ font-size: 9.5px; letter-spacing: .1em; color: var(--text3); }
+html[data-skin="obs"] .glossCount{
+  flex: 0 0 auto;
+  padding-left: 14px;
+  border-left: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--text3);
+  white-space: nowrap;
+}
+
+/* A3 字母分组：方形字母标 + 右侧延伸细线 + 条目数 */
+html[data-skin="obs"] .glossList{ margin: 8px 0 0; }
+html[data-skin="obs"] .glossGroup{ margin: 0; padding: 0; }
+html[data-skin="obs"] .glossAlpha{ display: flex; align-items: center; gap: 12px; margin: 26px 0 12px; font-family: var(--mono); font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--const-orange); }
+html[data-skin="obs"] .glossAlpha span{ display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: 1px solid var(--line2); font-size: 11.5px; letter-spacing: .04em; color: var(--text-white); }
+html[data-skin="obs"] .glossAlpha i{ order: 3; font-style: normal; font-size: 8.5px; letter-spacing: .18em; color: var(--text3); }
+html[data-skin="obs"] .glossAlpha::after{ content: ""; order: 2; flex: 1; height: 1px; background: var(--line); }
+html[data-skin="obs"] .glossGroup .termsGrid{ margin: 0 0 6px; align-items: stretch; }
+
+/* A4 术语卡：沿用 .termCard 外观，补来源链接 / 悬停细线 / 空状态 */
+html[data-skin="obs"] .glossCard{ display: flex; flex-direction: column; padding: 15px 16px 12px; background: rgba(9, 13, 20, .32); transition: border-color var(--dur), background var(--dur); }
+html[data-skin="obs"] .glossCard:hover{ border-color: var(--line2); background: rgba(9, 13, 20, .5); }
+html[data-skin="obs"] .glossCard .te{ font-size: 12.5px; letter-spacing: .05em; }
+html[data-skin="obs"] .glossCard .td{ flex: 1; font-size: 13.5px; line-height: 1.9; color: var(--text2); }
+html[data-skin="obs"] .glossCard .glossSrc{
+  display: block;
+  margin-top: 12px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(59, 78, 107, .3);
+  border-bottom: 0;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text3);
+  text-decoration: none;
+}
+html[data-skin="obs"] .glossCard .glossSrc::before{ content: "→ "; color: var(--line-color); }
+html[data-skin="obs"] .glossCard .glossSrc:hover{ border-bottom: 0; color: var(--const-orange); }
+html[data-skin="obs"] .glossCard .glossSrc:hover::before{ color: var(--const-orange); }
+html[data-skin="obs"] .glossList .emptyState{ margin-top: 20px; padding: 56px 20px; }
+
+/* ═════════ B · 速查表 #/cheatsheet ═════════
+   csWrap / tabsBlock 细线 / tabBar 吸顶 / 标签页内部节奏 */
+
+html[data-skin="obs"] .csWrap{ margin: 0; padding: 0; }
+html[data-skin="obs"] .csWrap .tabsBlock{ margin: 24px 0 0; border: 1px solid var(--line); background: rgba(9, 13, 20, .26); }
+html[data-skin="obs"] .csWrap .tabBar{
+  position: sticky;
+  top: var(--top-h);
+  z-index: 4;
+  gap: 2px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line2);
+  background: linear-gradient(180deg, rgba(10, 15, 24, .97), rgba(10, 15, 24, .9));
+  backdrop-filter: blur(8px);
+  counter-reset: tabN;
+}
+html[data-skin="obs"] .csWrap .tabBtn{
+  position: relative;
+  padding: 13px 10px 12px;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  background: none;
+  outline: none;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--text3);
+  cursor: pointer;
+  counter-increment: tabN;
+  transition: color var(--dur), border-color var(--dur), background var(--dur);
+}
+html[data-skin="obs"] .csWrap .tabBtn::before{ content: counter(tabN, decimal-leading-zero); margin-right: 7px; font-size: 8px; letter-spacing: .1em; color: var(--line-color); }
+html[data-skin="obs"] .csWrap .tabBtn:hover{ color: var(--text2); }
+html[data-skin="obs"] .csWrap .tabBtn.active{ color: var(--const-yellow); border-bottom-color: var(--const-orange); background: rgba(224, 98, 54, .04); }
+html[data-skin="obs"] .csWrap .tabBtn.active::before{ color: var(--const-orange); }
+html[data-skin="obs"] .csWrap .tabPane{ padding: 0 20px 14px; }
+html[data-skin="obs"] .csWrap .tabPane > .blockH:first-child{ margin-top: 26px; padding-top: 0; border-top: 0; }
+html[data-skin="obs"] .csWrap .tabPane .blockH{ margin: 30px 0 14px; font-size: 17px; }
+html[data-skin="obs"] .csWrap .tabPane .tableWrap{ margin: 14px 0 20px; }
+html[data-skin="obs"] .csWrap .tabPane .tableWrap table{ font-size: 13.5px; }
+html[data-skin="obs"] .csWrap .tabPane .tableWrap th{ padding: 10px 12px; font-size: 8.5px; letter-spacing: .14em; }
+html[data-skin="obs"] .csWrap .tabPane .tableWrap td{ padding: 9px 12px; line-height: 1.75; }
+html[data-skin="obs"] .csWrap .tabPane .codeBox{ margin: 14px 0 20px; }
+html[data-skin="obs"] .csWrap .tabPane .callout{ margin: 14px 0 6px; }
+
+/* ═════════ C · 航线图 #/map ═════════
+   星图框（角标 + 读数）/ Part 标签 / 空心节点 / 依赖虚线 / 图例 */
+
+html[data-skin="obs"] .mapWrap{ position: relative; margin: 26px 0 14px; padding: 20px 14px 10px; border: 1px solid var(--line); background: rgba(9, 13, 20, .3); }
+html[data-skin="obs"] .mapWrap::before{ content: ""; position: absolute; left: -1px; top: -1px; width: 16px; height: 16px; border-left: 1px solid var(--const-orange); border-top: 1px solid var(--const-orange); pointer-events: none; }
+html[data-skin="obs"] .mapWrap::after{
+  content: "FLIGHT_PLAN // ORBITAL CHART";
+  position: absolute;
+  right: 11px;
+  top: 6px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--text3);
+  pointer-events: none;
+}
+html[data-skin="obs"] .mapSvg{ display: block; width: 100%; height: auto; }
+html[data-skin="obs"] .mapSvg > path{ fill: none; }
+html[data-skin="obs"] .mapSvg > path:nth-of-type(1){ stroke: var(--accent2); stroke-opacity: .3; stroke-dasharray: 3 6; }
+html[data-skin="obs"] .mapSvg > path:nth-of-type(2){ stroke: var(--const-yellow); stroke-opacity: .3; stroke-dasharray: 3 6; }
+html[data-skin="obs"] .mapSvg > path:nth-of-type(3){ stroke: var(--accent); stroke-opacity: .3; stroke-dasharray: 3 6; }
+html[data-skin="obs"] .mapSvg > path:nth-of-type(4){ stroke: var(--ok); stroke-opacity: .3; stroke-dasharray: 3 6; }
+html[data-skin="obs"] .mapSvg > path:nth-of-type(n+5){ stroke: var(--line2); stroke-opacity: .55; stroke-width: 1; stroke-dasharray: 2 5; }
+
+/* Part 标签：mono 8.5 / 宽字距，颜色按编队顺序 */
+html[data-skin="obs"] .mapSvg > text{ font-family: var(--mono); font-size: 8.5px; letter-spacing: 2.4px; fill-opacity: .9; }
+html[data-skin="obs"] .mapSvg > text:nth-of-type(1){ fill: var(--accent2); }
+html[data-skin="obs"] .mapSvg > text:nth-of-type(2){ fill: var(--const-yellow); }
+html[data-skin="obs"] .mapSvg > text:nth-of-type(3){ fill: var(--accent); }
+html[data-skin="obs"] .mapSvg > text:nth-of-type(4){ fill: var(--ok); }
+
+/* 节点：空心圆 + 序号 / 中文标题 / 英文读数 */
+html[data-skin="obs"] .mapSvg .mapNode{ cursor: pointer; outline: none; }
+html[data-skin="obs"] .mapSvg .mapNode circle{ transition: stroke-opacity var(--dur), stroke-width var(--dur), fill var(--dur); }
+html[data-skin="obs"] .mapSvg .mapNode:hover circle{ stroke-opacity: 1; stroke-width: 1.6; fill: rgba(224, 98, 54, .07); }
+html[data-skin="obs"] .mapSvg .mapNode:focus-visible circle{ stroke-opacity: 1; stroke-width: 1.6; fill: rgba(224, 98, 54, .07); }
+html[data-skin="obs"] .mapSvg .mapNode text{ font-family: var(--mono); }
+html[data-skin="obs"] .mapSvg .mapNode text:nth-of-type(2){ font-family: var(--font); font-size: 10.5px; letter-spacing: .04em; fill: var(--text2); }
+html[data-skin="obs"] .mapSvg .mapNode text:nth-of-type(3){ font-size: 8px; letter-spacing: .1em; fill: var(--text3); }
+html[data-skin="obs"] .mapSvg .mapNode:hover text:nth-of-type(2){ fill: var(--text-white); }
+html[data-skin="obs"] .mapSvg .mapNode:focus-visible text:nth-of-type(2){ fill: var(--text-white); }
+
+/* Part I–IV 节点颜色（JS 写在 SVG 属性里的 var() 不可靠，这里兜底） */
+html[data-skin="obs"] .mapNode:is([data-ch="ch00"],[data-ch="ch01"],[data-ch="ch02"]) circle{ stroke: var(--accent2); }
+html[data-skin="obs"] .mapNode:is([data-ch="ch00"],[data-ch="ch01"],[data-ch="ch02"]) text:nth-of-type(1){ fill: var(--accent2); }
+html[data-skin="obs"] .mapNode:is([data-ch="ch03"],[data-ch="ch04"],[data-ch="ch05"]) circle{ stroke: var(--const-yellow); }
+html[data-skin="obs"] .mapNode:is([data-ch="ch03"],[data-ch="ch04"],[data-ch="ch05"]) text:nth-of-type(1){ fill: var(--const-yellow); }
+html[data-skin="obs"] .mapNode:is([data-ch="ch06"],[data-ch="ch07"],[data-ch="ch08"],[data-ch="ch09"],[data-ch="ch10"]) circle{ stroke: var(--accent); }
+html[data-skin="obs"] .mapNode:is([data-ch="ch06"],[data-ch="ch07"],[data-ch="ch08"],[data-ch="ch09"],[data-ch="ch10"]) text:nth-of-type(1){ fill: var(--accent); }
+html[data-skin="obs"] .mapNode:is([data-ch="ch11"],[data-ch="ch12"],[data-ch="ch13"]) circle{ stroke: var(--ok); }
+html[data-skin="obs"] .mapNode:is([data-ch="ch11"],[data-ch="ch12"],[data-ch="ch13"]) text:nth-of-type(1){ fill: var(--ok); }
+
+/* 图例：细线隔开，右侧单独说明虚线含义 */
+html[data-skin="obs"] .mapLegend{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  margin: 0;
+  padding: 12px 2px 0;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+html[data-skin="obs"] .mapLegend span{ display: inline-flex; align-items: center; gap: 7px; }
+html[data-skin="obs"] .mapLegend .legendDot{ width: 6px; height: 6px; border-radius: 0; box-shadow: none; }
+html[data-skin="obs"] .mapLegend .dim{ margin-left: auto; font-size: 8px; letter-spacing: .16em; }
+
+/* ═════════ D · Debug 手册 #/debug ═════════
+   分类标题（编号 + 细线）/ 条目卡 / 报错原文 / 原因·修复 / 修复代码 */
+
+html[data-skin="obs"] .dbgSection{ margin: 32px 0 0; }
+html[data-skin="obs"] .dbgCat{ display: flex; align-items: center; gap: 14px; margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line2); }
+html[data-skin="obs"] .dbgCat .pn{ flex: 0 0 auto; padding: 3px 7px; border: 1px solid var(--line2); font-family: var(--mono); font-size: 8.5px; letter-spacing: .16em; color: var(--const-orange); }
+html[data-skin="obs"] .dbgCat h3{ flex: 1; min-width: 0; margin: 0; font-family: var(--font); font-weight: 400; font-size: 17px; letter-spacing: .04em; color: var(--text-white); }
+html[data-skin="obs"] .dbgCat i{ flex: 0 0 auto; font-style: normal; font-family: var(--mono); font-size: 8.5px; letter-spacing: .16em; color: var(--text3); }
+html[data-skin="obs"] .dbgCard{ position: relative; margin: 0 0 12px; border: 1px solid var(--line); border-left: 2px solid var(--const-red); background: rgba(9, 13, 20, .3); transition: border-color var(--dur), background var(--dur); }
+html[data-skin="obs"] .dbgCard:hover{ border-color: var(--line2); background: rgba(9, 13, 20, .42); }
+html[data-skin="obs"] .dbgErr{ display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: rgba(9, 13, 20, .4); }
+html[data-skin="obs"] .dbgErr .dbgTag{ flex: 0 0 auto; padding: 1px 5px; border: 1px solid rgba(200, 35, 55, .45); font-family: var(--mono); font-size: 8px; letter-spacing: .2em; text-transform: uppercase; color: var(--const-red); }
+html[data-skin="obs"] .dbgCard .dbgErr > code:not([class]){ padding: 0; border: 0; background: none; font-family: var(--mono); font-size: 11.5px; letter-spacing: .02em; line-height: 1.6; color: var(--const-red); overflow-wrap: anywhere; }
+html[data-skin="obs"] .dbgBody{ padding: 12px 14px 15px; }
+html[data-skin="obs"] .dbgRow{ display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 10px; padding: 5px 0; }
+html[data-skin="obs"] .dbgRow + .dbgRow{ border-top: 1px dashed rgba(59, 78, 107, .3); }
+html[data-skin="obs"] .dbgK{ padding-top: 3px; font-family: var(--mono); font-size: 8.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--text3); }
+html[data-skin="obs"] .dbgV{ font-size: 13.5px; line-height: 1.9; color: var(--text2); }
+html[data-skin="obs"] .dbgV b{ color: var(--text-white); font-weight: 500; }
+html[data-skin="obs"] .dbgV strong{ color: var(--text-white); font-weight: 500; }
+html[data-skin="obs"] .dbgCode{
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--line2);
+  background: var(--codeBg);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.85;
+  color: var(--codeText);
+  white-space: pre;
+  overflow-x: auto;
+  tab-size: 4;
+}
+
+/* ═════════ E · 使用说明 #/about ═════════
+   pageHead 下的正文节奏：标题 / 段落 / 行标签表格 / 键帽 / 提示卡 / 操作区 */
+
+/* about 不在 .chapter 里，手动重置小节编号，让 h2.blockH::before 从 §01 开始而不是 §00 */
+html[data-skin="obs"][data-view="about"] .pageHead + div{ counter-reset: secH; padding-top: 4px; }
+html[data-skin="obs"][data-view="about"] .pageHead + div > .blockH:first-child{ margin-top: 30px; padding-top: 0; border-top: 0; }
+html[data-skin="obs"][data-view="about"] .blockH{ margin: 44px 0 16px; font-size: 22px; }
+html[data-skin="obs"][data-view="about"] .blockP{ max-width: 72ch; margin: 0 0 18px; font-size: 14px; line-height: 1.95; color: var(--text2); }
+html[data-skin="obs"][data-view="about"] .tableWrap{ margin: 18px 0 26px; }
+html[data-skin="obs"][data-view="about"] .tableWrap tbody th{
+  width: 130px;
+  padding: 11px 14px;
+  border-bottom: 1px solid rgba(59, 78, 107, .3);
+  background: none;
+  font-family: var(--font);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  text-transform: none;
+  color: var(--text2);
+  vertical-align: top;
+}
+html[data-skin="obs"][data-view="about"] .tableWrap thead th{ padding: 10px 14px; }
+html[data-skin="obs"][data-view="about"] .tableWrap td{ font-size: 13.5px; line-height: 1.85; }
+html[data-skin="obs"][data-view="about"] .kbd{ font-size: 10.5px; letter-spacing: .06em; padding: 0 5px; border-color: var(--line2); color: var(--const-yellow); background: rgba(9, 13, 20, .5); }
+html[data-skin="obs"][data-view="about"] .callout{ margin: 24px 0; }
+html[data-skin="obs"][data-view="about"] .qzActions{ margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--line); }
+html[data-skin="obs"][data-view="about"] .qzActions .dim{ font-family: var(--mono); font-size: 8.5px; letter-spacing: .14em; color: var(--text3); }
+
+/* ═════════ F · 命令面板 ⌘K / Ctrl+K ═════════
+   半透明深底 + 四角细线 + 选中项左侧橙色游标 + mono 大写字距 */
+
+html[data-skin="obs"] .cmdk{ position: fixed; inset: 0; z-index: 205; display: flex; align-items: flex-start; justify-content: center; padding: 12vh 20px 20px; background: rgba(5, 8, 12, .72); backdrop-filter: blur(3px); }
+html[data-skin="obs"] .cmdk[hidden]{ display: none; }
+html[data-skin="obs"] .cmdkCard{
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(640px, 100%);
+  max-height: min(74vh, 560px);
+  border: 1px solid var(--line2);
+  border-radius: 0;
+  background: rgba(9, 13, 20, .97);
+  box-shadow: none;
+  overflow: hidden;
+}
+html[data-skin="obs"] .cmdkCard::before{ content: ""; position: absolute; left: -1px; top: -1px; width: 15px; height: 15px; border-left: 1px solid var(--const-orange); border-top: 1px solid var(--const-orange); pointer-events: none; }
+html[data-skin="obs"] .cmdkCard::after{
+  content: "";
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 15px;
+  height: 15px;
+  border-right: 1px solid var(--const-orange);
+  border-bottom: 1px solid var(--const-orange);
+  pointer-events: none;
+}
+html[data-skin="obs"] .cmdkHead{ display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-bottom: 1px solid var(--line); background: rgba(10, 15, 24, .7); }
+html[data-skin="obs"] .cmdkK{ flex: 0 0 auto; padding: 3px 6px; border: 1px solid var(--line2); font-family: var(--mono); font-size: 8.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--text3); }
+html[data-skin="obs"] .cmdkEsc{ flex: 0 0 auto; padding: 3px 6px; border: 1px solid var(--line2); font-family: var(--mono); font-size: 8.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--text3); }
+html[data-skin="obs"] .cmdkInput{ flex: 1; min-width: 0; height: 26px; border: 0; border-radius: 0; background: none; outline: none; font-family: var(--mono); font-size: 11.5px; letter-spacing: .04em; color: var(--text-white); }
+html[data-skin="obs"] .cmdkInput::placeholder{ font-size: 10.5px; letter-spacing: .06em; color: var(--text3); }
+html[data-skin="obs"] .cmdkList{ flex: 1; min-height: 0; overflow-y: auto; padding: 6px; }
+html[data-skin="obs"] .cmdkItem{ position: relative; display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 9px 12px; border-left: 1px solid transparent; cursor: pointer; }
+html[data-skin="obs"] .cmdkItem::before{ content: ""; position: absolute; left: -1px; top: 50%; width: 2px; height: 0; transform: translateY(-50%); background: var(--const-orange); transition: height var(--dur) var(--ease); }
+html[data-skin="obs"] .cmdkItem.sel{ background: rgba(224, 98, 54, .06); }
+html[data-skin="obs"] .cmdkItem:hover{ background: rgba(224, 98, 54, .06); }
+html[data-skin="obs"] .cmdkItem.sel::before{ height: calc(100% - 10px); }
+html[data-skin="obs"] .cmdkItem:hover::before{ height: calc(100% - 10px); }
+html[data-skin="obs"] .cmdkKind{ font-family: var(--mono); font-size: 8px; letter-spacing: .18em; text-transform: uppercase; color: var(--text3); }
+html[data-skin="obs"] .cmdkItem.sel .cmdkKind{ color: var(--const-orange); }
+html[data-skin="obs"] .cmdkLabel{ min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13.5px; letter-spacing: .02em; color: var(--text2); }
+html[data-skin="obs"] .cmdkItem.sel .cmdkLabel{ color: var(--text-white); }
+html[data-skin="obs"] .cmdkHint{
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .14em;
+  text-align: right;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+html[data-skin="obs"] .cmdkEmpty{ padding: 26px; text-align: center; font-family: var(--mono); font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--text3); }
+html[data-skin="obs"] .cmdkFoot{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  padding: 9px 14px;
+  border-top: 1px solid var(--line);
+  background: rgba(10, 15, 24, .55);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+html[data-skin="obs"] .cmdkFoot b{ display: inline-block; margin-right: 3px; padding: 0 4px; border: 1px solid var(--line); font-weight: 400; font-size: 8.5px; color: var(--text2); }
+html[data-skin="obs"] .cmdkFoot .cmdkCount{ margin-left: auto; letter-spacing: .14em; color: var(--const-yellow); }
+
+/* ═════════ G · 搜索结果下拉 #results ═════════
+   在 observatory 既有浮层上收紧：无投影 / 顶边橙线 / 行首橙游标 / mark 无底色 */
+
+html[data-skin="obs"] .results{ border: 1px solid var(--line2); border-top: 2px solid var(--const-orange); border-radius: 0; box-shadow: none; padding: 0; }
+html[data-skin="obs"] .results .resHead{ display: block; padding: 10px 14px 9px; border-bottom: 1px solid var(--line); font-size: 8.5px; letter-spacing: .2em; color: var(--text3); }
+html[data-skin="obs"] .results .resItem{ position: relative; padding: 10px 14px 10px 16px; border-left: 1px solid transparent; border-radius: 0; text-decoration: none; transition: background var(--dur), border-color var(--dur); }
+html[data-skin="obs"] .results .resItem::before{ content: ""; position: absolute; left: -1px; top: 50%; width: 2px; height: 0; transform: translateY(-50%); background: var(--const-orange); transition: height var(--dur) var(--ease); }
+html[data-skin="obs"] .results .resItem:hover{ border-left-color: var(--const-orange); background: rgba(224, 98, 54, .05); }
+html[data-skin="obs"] .results .resItem.sel{ border-left-color: var(--const-orange); background: rgba(224, 98, 54, .05); }
+html[data-skin="obs"] .results .resItem:hover::before{ height: calc(100% - 12px); }
+html[data-skin="obs"] .results .resItem.sel::before{ height: calc(100% - 12px); }
+html[data-skin="obs"] .results .resItem .rt{ font-family: var(--mono); font-size: 8.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--const-yellow); }
+html[data-skin="obs"] .results .resItem .rs{ margin-top: 4px; font-size: 11.5px; line-height: 1.65; color: var(--text2); }
+html[data-skin="obs"] .results .resItem mark{ padding: 0; border-bottom: 1px solid rgba(224, 98, 54, .5); background: none; color: var(--const-orange); }
+html[data-skin="obs"] .results .resEmpty{ padding: 24px; font-size: 10.5px; letter-spacing: .12em; color: var(--text3); }
+html[data-skin="obs"] .results .resEmpty .small{ display: block; margin-top: 7px; font-size: 9.5px; letter-spacing: .06em; color: var(--text3); }
+
+/* ═════════ H · 响应式 ≤900px / ≤640px ═════════
+   列表单列、字号收缩、地图横向滑动（页面本身不出现横向溢出） */
+
+@media (max-width: 900px){
+  html[data-skin="obs"] .statRow{ margin: 20px 0 24px; }
+  html[data-skin="obs"] .statRow .statCard{ min-height: 72px; padding: 12px 14px 11px; }
+  html[data-skin="obs"] .statRow .statCard .sv{ font-size: 26px; }
+  html[data-skin="obs"] .glossBar{ gap: 10px; }
+  html[data-skin="obs"] .glossCount{ padding-left: 10px; letter-spacing: .12em; }
+  html[data-skin="obs"] .glossAlpha{ margin: 20px 0 10px; }
+  html[data-skin="obs"] .csWrap .tabBar{ padding: 0 6px; }
+  html[data-skin="obs"] .csWrap .tabBtn{ padding: 11px 8px 10px; font-size: 8.5px; letter-spacing: .1em; }
+  html[data-skin="obs"] .csWrap .tabPane{ padding: 0 12px 10px; }
+  html[data-skin="obs"] .csWrap .tabPane .tableWrap{ margin: 12px 0 16px; }
+  html[data-skin="obs"] .csWrap .tabPane .codeBox{ margin: 12px 0 16px; }
+  html[data-skin="obs"] .mapWrap{ overflow-x: auto; padding: 16px 10px 8px; }
+  html[data-skin="obs"] .mapWrap::before{ display: none; }
+  html[data-skin="obs"] .mapWrap::after{ content: "FLIGHT_PLAN // SWIPE ↔"; top: 4px; right: 8px; }
+  html[data-skin="obs"] .mapSvg{ min-width: 760px; }
+  html[data-skin="obs"] .mapLegend{ gap: 7px 14px; }
+  html[data-skin="obs"] .mapLegend .dim{ margin-left: 0; }
+  html[data-skin="obs"] .dbgRow{ grid-template-columns: 1fr; gap: 2px; }
+  html[data-skin="obs"] .dbgK{ padding-top: 0; }
+  html[data-skin="obs"] .dbgErr{ align-items: flex-start; flex-direction: column; gap: 6px; }
+  html[data-skin="obs"] .dbgCode{ font-size: 10.5px; }
+  html[data-skin="obs"][data-view="about"] .blockH{ margin-top: 34px; font-size: 19px; }
+  html[data-skin="obs"][data-view="about"] .blockP{ font-size: 14px; }
+  html[data-skin="obs"] .cmdk{ padding: 8vh 10px 12px; }
+  html[data-skin="obs"] .cmdkItem{ grid-template-columns: 54px minmax(0, 1fr); row-gap: 2px; }
+  html[data-skin="obs"] .cmdkHint{ grid-column: 1 / -1; max-width: none; text-align: left; }
+}
+
+@media (max-width: 640px){
+  html[data-skin="obs"] .statRow{ grid-template-columns: 1fr; }
+  html[data-skin="obs"] .statRow .statCard{ min-height: 0; border-left: 0; border-top: 1px solid var(--line); }
+  html[data-skin="obs"] .statRow .statCard:first-child{ border-top: 0; }
+  html[data-skin="obs"] .glossBar{ flex-wrap: wrap; gap: 6px 10px; }
+  html[data-skin="obs"] .glossCount{ border-left: 0; padding-left: 0; }
+  html[data-skin="obs"] .glossAlpha span{ width: 21px; height: 21px; font-size: 10.5px; }
+  html[data-skin="obs"] .csWrap .tabPane{ padding: 0 10px 8px; }
+  html[data-skin="obs"] .csWrap .tabPane .blockH{ margin: 24px 0 12px; font-size: 17px; }
+  html[data-skin="obs"] .mapLegend{ font-size: 8px; letter-spacing: .1em; }
+  html[data-skin="obs"] .dbgCat{ gap: 10px; flex-wrap: wrap; }
+  html[data-skin="obs"] .dbgCat h3{ font-size: 15.5px; }
+  html[data-skin="obs"] .cmdk{ padding: 6vh 8px 10px; }
+  html[data-skin="obs"] .cmdkCard{ max-height: 82vh; }
+  html[data-skin="obs"] .cmdkHead{ padding: 9px 10px; }
+  html[data-skin="obs"] .cmdkFoot{ gap: 4px 10px; padding: 8px 10px; }
+  html[data-skin="obs"] .cmdkFoot .cmdkCount{ margin-left: 0; }
+}
+
+
+/* ---------------------------------------------------------------- 集成补丁（Lead）
+   搜索结果行结构更新：.rt 内拆成 .rk（类型）+ .rc（章节）
+   移动端速查表允许容器内横滑，about 版本号统一读数样式 */
+html[data-skin="obs"] .resItem .rt{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+html[data-skin="obs"] .resItem .rk{
+  flex: 0 0 auto;
+  color: var(--const-orange);
+}
+
+html[data-skin="obs"] .resItem .rc{
+  color: var(--const-yellow);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-skin="obs"] .aboutVer{
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .12em;
+  color: var(--text-dim);
+  margin-left: auto;
+}
+
+@media (max-width: 900px) {
+  html[data-skin="obs"] .tabPane .tableWrap{
+    overflow-x: auto;
+  }
+
+  html[data-skin="obs"] .tabPane .tableWrap table{
+    min-width: 540px;
+  }
+}
+
+/* ═════════ I · 可访问性补丁（移动端触控目标 / 键盘焦点） ═════════ */
+
+@media (max-width: 900px){
+  /* 术语卡底部「来源跳转条」：触控目标 ≥36px */
+  html[data-skin="obs"] .glossCard .glossSrc{
+    display: flex;
+    align-items: center;
+    min-height: 36px;
+  }
+
+  /* 命令面板条目 / 输入框：触控目标 ≥36px */
+  html[data-skin="obs"] .cmdkItem,
+  html[data-skin="obs"] .glossInput,
+  html[data-skin="obs"] .cmdkInput{
+    min-height: 36px;
+  }
+}
+
+/* 键盘焦点补回：这些控件为了外观清掉了 outline；
+   不用鼠标、只按 Tab 时用 1px 橙色细线标示当前焦点。 */
+html[data-skin="obs"] .glossBar .glossInput:focus-visible,
+html[data-skin="obs"] .cmdkCard .cmdkInput:focus-visible,
+html[data-skin="obs"] .csWrap .tabBtn:focus-visible{
+  outline: 1px solid var(--const-orange);
+  outline-offset: 2px;
+}
+
+/* 命令面板 / 弹窗内部有键盘焦点时，整卡边框转橙，帮助定位当前区域 */
+html[data-skin="obs"] .cmdkCard:focus-within,
+html[data-skin="obs"] .modalCard:focus-within{
+  border-color: var(--const-orange);
+}

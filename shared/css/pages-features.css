@@ -1,0 +1,455 @@
+/* =====================================================================
+ * pages-features.css · 新能力页外观层
+ * 覆盖：① 题目生成器页 #/drill（app.js 的 VIEWS.drill）
+ *       ② StdDraw 可视化实验台（labs.js 的 LABS.stddraw）
+ * 规范：所有选择器带 html[data-skin="obs"] 前缀；直角、1px 细线、无投影；
+ *       颜色只用 observatory.css 的令牌；!important 不使用。
+ * 作者模块：feature-builder
+ * ===================================================================== */
+
+/* =====================================================================
+ * 一、题目生成器（#/drill）
+ * ===================================================================== */
+
+html[data-skin="obs"] .drillHost { margin-top: 18px; }
+html[data-skin="obs"] .drillPage { display: flex; flex-direction: column; min-width: 0; }
+
+/* ---------- 配置卡 ---------- */
+html[data-skin="obs"] .drillSetup {
+  border: 1px solid var(--line);
+  background: rgba(13, 19, 29, .52);
+  padding: 16px 18px 18px;
+}
+
+html[data-skin="obs"] .drillSetupHead {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+html[data-skin="obs"] .drillKicker {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .16em;
+  color: var(--accent);
+}
+
+html[data-skin="obs"] .drillAuth {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .14em;
+  color: var(--text3);
+}
+
+html[data-skin="obs"] .drillGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+html[data-skin="obs"] .drillField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+html[data-skin="obs"] .drillLabel {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .14em;
+  color: var(--text3);
+}
+
+html[data-skin="obs"] .drillSelect {
+  width: 100%;
+  height: 32px;
+  padding: 0 9px;
+  background: var(--bg2);
+  border: 1px solid var(--line2);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  outline: none;
+  border-radius: 0;
+  color-scheme: dark;
+}
+
+html[data-skin="obs"] .drillSelect:focus { border-color: var(--accent); }
+
+/* ---------- 模板说明卡 ---------- */
+html[data-skin="obs"] .drillTpls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 16px;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+
+html[data-skin="obs"] .drillTpl {
+  background: var(--bg2);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+html[data-skin="obs"] .drillTplIcon { color: var(--accent); display: block; height: 14px; line-height: 14px; }
+html[data-skin="obs"] .drillTplIcon svg { width: 13px; height: 13px; }
+html[data-skin="obs"] .drillTplT { font-size: 12.5px; color: var(--text); font-weight: 500; }
+html[data-skin="obs"] .drillTplD { font-size: 10.5px; color: var(--text3); line-height: 1.55; }
+html[data-skin="obs"] .drillTplE { font-family: var(--mono); font-size: 8.5px; letter-spacing: .12em; color: var(--text3); margin-top: 2px; }
+
+/* ---------- 开始行 / 累计 ---------- */
+html[data-skin="obs"] .drillStartRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+html[data-skin="obs"] .drillStart {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 16px;
+  background: var(--accentSoft);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 11.5px;
+  letter-spacing: .06em;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+html[data-skin="obs"] .drillStart:hover { background: var(--accent); color: var(--bg-deep); }
+html[data-skin="obs"] .drillStart svg { width: 12px; height: 12px; }
+html[data-skin="obs"] .drillHint { font-size: 10.5px; color: var(--text3); }
+
+html[data-skin="obs"] .drillStatsLine {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .06em;
+  color: var(--text3);
+  line-height: 1.9;
+}
+
+html[data-skin="obs"] .drillStatsLine b { color: var(--accent2); font-weight: 400; }
+
+/* ---------- 加载 / 失败 ---------- */
+html[data-skin="obs"] .drillLoading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 26px 18px;
+  border: 1px solid var(--line);
+  background: rgba(13, 19, 29, .52);
+}
+
+html[data-skin="obs"] .drillSpinner {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  background: var(--accent);
+  animation: drillPulse .9s steps(2, end) infinite;
+}
+
+@keyframes drillPulse { 50% { opacity: .18; } }
+
+html[data-skin="obs"] .drillLoadingTxt { font-size: 11.5px; color: var(--text2); }
+html[data-skin="obs"] .drillFail {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--err);
+  background: var(--errSoft);
+  font-size: 11.5px;
+  color: var(--err);
+}
+
+/* ---------- 作答卡 ---------- */
+html[data-skin="obs"] .drillCard {
+  border: 1px solid var(--line);
+  background: rgba(13, 19, 29, .52);
+  padding: 16px 18px 20px;
+}
+
+html[data-skin="obs"] .drillBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+html[data-skin="obs"] .drillNo { font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em; color: var(--accent); }
+html[data-skin="obs"] .drillType { font-size: 11.5px; color: var(--text2); }
+html[data-skin="obs"] .drillPips { display: inline-flex; gap: 2px; }
+html[data-skin="obs"] .drillPip { width: 5px; height: 10px; background: var(--line2); display: block; }
+html[data-skin="obs"] .drillPip.on { background: var(--const-yellow); }
+html[data-skin="obs"] .drillSeed {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .12em;
+  color: var(--text3);
+}
+
+html[data-skin="obs"] .drillProg { height: 2px; background: var(--line); margin: 10px 0 14px; }
+html[data-skin="obs"] .drillProg i { display: block; height: 100%; background: var(--accent); transition: width .3s var(--ease); }
+
+html[data-skin="obs"] .drillStem { font-size: 13.5px; color: var(--text2); line-height: 1.8; margin-bottom: 12px; }
+html[data-skin="obs"] .drillCodeBox { margin: 0 0 14px; }
+html[data-skin="obs"] .drillCodeBox > pre { max-height: 340px; overflow: auto; }
+html[data-skin="obs"] .drillCodeHint {
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .1em;
+  color: var(--text3);
+  font-weight: 400;
+}
+
+/* ---------- 选项 ---------- */
+html[data-skin="obs"] .drillOpts { display: flex; flex-direction: column; gap: 7px; }
+
+html[data-skin="obs"] .drillOpt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  text-align: left;
+  cursor: pointer;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  color: var(--text2);
+  font-family: var(--font);
+  font-size: 12.5px;
+  border-radius: 0;
+  transition: border-color .18s, background .18s;
+}
+
+html[data-skin="obs"] .drillOpt:hover { border-color: var(--accent); color: var(--text); }
+html[data-skin="obs"] .drillOpt .drOptK {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--text3);
+  border: 1px solid var(--line2);
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 18px;
+}
+html[data-skin="obs"] .drillOpt .drOptT {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-width: 0;
+}
+html[data-skin="obs"] .drillOpt.done { cursor: default; }
+html[data-skin="obs"] .drillOpt.done:hover { border-color: var(--line); color: inherit; }
+html[data-skin="obs"] .drillOpt.correct,
+html[data-skin="obs"] .drillOpt.correct:hover { border-color: var(--ok); background: var(--okSoft); color: var(--ok); }
+html[data-skin="obs"] .drillOpt.wrong,
+html[data-skin="obs"] .drillOpt.wrong:hover { border-color: var(--err); background: var(--errSoft); color: var(--err); }
+html[data-skin="obs"] .drillOpt.correct .drOptK,
+html[data-skin="obs"] .drillOpt.wrong .drOptK { color: inherit; border-color: currentColor; }
+
+/* ---------- 判分反馈 ---------- */
+html[data-skin="obs"] .drillFeedback {
+  margin-top: 16px;
+  border: 1px solid var(--line2);
+  padding: 12px 14px;
+  background: rgba(9, 13, 20, .34);
+}
+html[data-skin="obs"] .drillFeedback.ok { border-left: 2px solid var(--ok); }
+html[data-skin="obs"] .drillFeedback.err { border-left: 2px solid var(--err); }
+
+html[data-skin="obs"] .drillFbHead { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+html[data-skin="obs"] .drillFbIcon svg { width: 13px; height: 13px; }
+html[data-skin="obs"] .drillFeedback.ok .drillFbIcon { color: var(--ok); }
+html[data-skin="obs"] .drillFeedback.err .drillFbIcon { color: var(--err); }
+html[data-skin="obs"] .drillFbTitle { font-size: 12.5px; color: var(--text); }
+html[data-skin="obs"] .drillFbAns {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--accent2);
+  word-break: break-all;
+}
+
+html[data-skin="obs"] .drillSrc {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .04em;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+html[data-skin="obs"] .drillExT {
+  margin-top: 12px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .16em;
+  color: var(--accent);
+}
+
+html[data-skin="obs"] .drillExList {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+html[data-skin="obs"] .drillExItem { display: flex; gap: 9px; font-size: 11.5px; color: var(--text2); line-height: 1.7; }
+html[data-skin="obs"] .drillExLine {
+  flex: 0 0 36px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--accent3);
+  padding-top: 3px;
+}
+html[data-skin="obs"] .drillExNote { min-width: 0; }
+html[data-skin="obs"] .drillSum {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--line);
+  font-size: 11.5px;
+  color: var(--text);
+}
+
+html[data-skin="obs"] .drillNextRow { margin-top: 14px; display: flex; justify-content: flex-end; }
+html[data-skin="obs"] .drillNext {
+  height: 32px;
+  padding: 0 16px;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: var(--bg-deep);
+  font-family: var(--font);
+  font-size: 11.5px;
+  letter-spacing: .06em;
+  cursor: pointer;
+  border-radius: 0;
+}
+html[data-skin="obs"] .drillNext:hover { background: var(--const-yellow); border-color: var(--const-yellow); }
+
+html[data-skin="obs"] .drillFootLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .1em;
+  color: var(--text3);
+  flex-wrap: wrap;
+}
+html[data-skin="obs"] .drillAbort {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--line2);
+  color: var(--text3);
+  height: 26px;
+  padding: 0 10px;
+  font-size: 10.5px;
+  cursor: pointer;
+  border-radius: 0;
+}
+html[data-skin="obs"] .drillAbort:hover { border-color: var(--accent); color: var(--text); }
+
+/* ---------- 成绩页 ---------- */
+html[data-skin="obs"] .drillResult {
+  border: 1px solid var(--line);
+  background: rgba(13, 19, 29, .52);
+  padding: 20px 18px;
+}
+html[data-skin="obs"] .drillResKicker { font-family: var(--mono); font-size: 9.5px; letter-spacing: .18em; color: var(--accent); }
+html[data-skin="obs"] .drillResultHead { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+html[data-skin="obs"] .drillScore { display: flex; align-items: baseline; gap: 8px; margin: 12px 0 5px; }
+html[data-skin="obs"] .drillScoreNum { font-family: var(--font); font-size: 48px; font-weight: 300; color: var(--text); line-height: 1; }
+html[data-skin="obs"] .drillScoreOf { font-family: var(--mono); font-size: 15.5px; color: var(--text3); }
+html[data-skin="obs"] .drillScorePct { margin-left: 10px; font-family: var(--mono); font-size: 11.5px; color: var(--const-yellow); }
+html[data-skin="obs"] .drillResLine { font-family: var(--mono); font-size: 9.5px; letter-spacing: .08em; color: var(--text3); }
+
+html[data-skin="obs"] .drillBreak { display: flex; flex-direction: column; gap: 8px; margin: 18px 0 20px; }
+html[data-skin="obs"] .drillBrkRow { display: grid; grid-template-columns: 118px 1fr 62px; gap: 10px; align-items: center; }
+html[data-skin="obs"] .drillBrkName { font-size: 11.5px; color: var(--text2); }
+html[data-skin="obs"] .drillBrkTrack { height: 3px; background: var(--line); display: block; }
+html[data-skin="obs"] .drillBrkTrack i { display: block; height: 100%; background: var(--accent); }
+html[data-skin="obs"] .drillBrkVal { font-family: var(--mono); font-size: 9.5px; color: var(--text3); text-align: right; }
+html[data-skin="obs"] .drillResultBtns { display: flex; gap: 10px; flex-wrap: wrap; }
+html[data-skin="obs"] .drillFootNote {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .04em;
+  color: var(--text3);
+  line-height: 1.8;
+}
+
+/* =====================================================================
+ * 二、StdDraw 实验台（labs.js · LABS.stddraw）
+ * ===================================================================== */
+
+html[data-skin="obs"] .sdIntro { margin: 0 0 12px; font-size: 11.5px; line-height: 1.85; }
+html[data-skin="obs"] .sdStage { padding: 12px 8px; overflow-x: auto; }
+html[data-skin="obs"] .sdCanvas { display: block; margin: 0 auto; background: var(--codeBg); border: 1px solid var(--line2); }
+html[data-skin="obs"] .sdCodeHost { margin-top: 14px; }
+html[data-skin="obs"] .sdCodeCap { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+html[data-skin="obs"] .sdCodeK { font-family: var(--mono); font-size: 8.5px; letter-spacing: .14em; color: var(--accent); }
+html[data-skin="obs"] .sdCodeHint { font-family: var(--mono); font-size: 8.5px; letter-spacing: .06em; color: var(--text3); }
+html[data-skin="obs"] .sdCodeHost .codeBox { max-height: 300px; overflow: auto; margin: 0; }
+
+/* =====================================================================
+ * 三、响应式（375px 手机宽度不溢出）
+ * ===================================================================== */
+
+@media (max-width: 760px) {
+  html[data-skin="obs"] .drillGrid { grid-template-columns: minmax(0, 1fr); }
+  html[data-skin="obs"] .drillTpls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html[data-skin="obs"] .drillBrkRow { grid-template-columns: 92px minmax(0, 1fr) 56px; }
+  html[data-skin="obs"] .drillScoreNum { font-size: 38px; }
+  html[data-skin="obs"] .drillCard { padding: 12px 12px 16px; }
+  html[data-skin="obs"] .drillCodeBox > pre { max-height: 260px; }
+  html[data-skin="obs"] .drillFbAns { margin-left: 0; width: 100%; }
+  html[data-skin="obs"] .drillSetup { padding: 13px 12px 15px; }
+  html[data-skin="obs"] .drillSetupHead { flex-wrap: wrap; gap: 4px 10px; }
+  html[data-skin="obs"] .drillAuth { margin-left: 0; width: 100%; }
+}
+
+@media (max-width: 420px) {
+  html[data-skin="obs"] .drillTpls { grid-template-columns: minmax(0, 1fr); }
+  html[data-skin="obs"] .drillOpt { font-size: 11.5px; padding: 8px 9px; }
+  html[data-skin="obs"] .drillOpt .drOptT { font-size: 11.5px; }
+  html[data-skin="obs"] .drillExItem { font-size: 11.5px; }
+  html[data-skin="obs"] .drillNo { font-size: 9.5px; }
+}

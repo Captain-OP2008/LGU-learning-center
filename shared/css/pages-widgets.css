@@ -1,0 +1,65 @@
+/* =====================================================================
+ * assets/pages-widgets.css · 通用小组件样式
+ * 职责：空态（learnEmpty*）、小节标题（learnSection*）、说明条（learnNote）。
+ *       由「项目实战」「进阶轨道」等页面共用（原学习系统模块移除后保留）。
+ * ===================================================================== */
+html[data-skin="obs"] .learnSection {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 26px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+html[data-skin="obs"] .learnSectionT { font-family: var(--font); font-size: 15.5px; color: var(--text); font-weight: 500; }
+
+html[data-skin="obs"] .learnSectionK {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .14em;
+  color: var(--text3);
+}
+
+html[data-skin="obs"] .learnNote {
+  margin-top: 22px;
+  padding: 12px 14px;
+  border: 1px dashed var(--line);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  line-height: 1.9;
+  letter-spacing: .04em;
+  color: var(--text3);
+}
+
+html[data-skin="obs"] .learnNote b { color: var(--accent2); font-weight: 400; }
+
+html[data-skin="obs"] .learnEmpty {
+  margin-top: 16px;
+  padding: 26px 20px;
+  border: 1px solid var(--line);
+  background: rgba(13, 19, 29, .52);
+  text-align: center;
+}
+
+html[data-skin="obs"] .learnEmptyT { font-size: 15.5px; color: var(--text); margin-bottom: 8px; }
+
+html[data-skin="obs"] .learnEmptyD { font-size: 11.5px; color: var(--text3); line-height: 1.9; }
+
+html[data-skin="obs"] .learnEmptyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 14px;
+  height: 32px;
+  padding: 0 15px;
+  background: var(--accentSoft);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  font-size: 11.5px;
+  letter-spacing: .05em;
+  text-decoration: none;
+}
+
+html[data-skin="obs"] .learnEmptyBtn:hover { background: var(--accent); color: var(--bg-deep); }

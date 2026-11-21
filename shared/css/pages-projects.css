@@ -1,0 +1,425 @@
+/* =====================================================================
+ * pages-projects.css · 项目式学习外观层（#/projects 列表 + #/projects/:id 详情）
+ * 规范：选择器一律带 html[data-skin="obs"] 前缀；直角 / 1px 细线 / 无投影；
+ *       颜色只用 observatory.css 的令牌；不使用 !important。
+ * 作者模块：feature-builder
+ * ===================================================================== */
+
+/* ================================================================ 00 页面外壳 */
+html[data-skin="obs"] .projectsPage { display: flex; flex-direction: column; min-width: 0; }
+html[data-skin="obs"] .projectsHost { margin-top: 16px; min-width: 0; }
+
+/* ================================================================ 01 项目列表 */
+html[data-skin="obs"] .projectsIntro {
+  margin-top: 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--accent);
+  background: rgba(13, 19, 29, .52);
+}
+html[data-skin="obs"] .piK {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .16em;
+  color: var(--accent);
+}
+html[data-skin="obs"] .piT {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--text2);
+}
+html[data-skin="obs"] .piStat {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .08em;
+  color: var(--text3);
+}
+html[data-skin="obs"] .piStat b { color: var(--accent2); font-weight: 400; }
+
+html[data-skin="obs"] .projectsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+html[data-skin="obs"] .projectCard {
+  display: block;
+  padding: 15px 16px 14px;
+  border: 1px solid var(--line);
+  background: rgba(13, 19, 29, .42);
+  text-decoration: none;
+  min-width: 0;
+  transition: border-color .18s, background .18s;
+}
+html[data-skin="obs"] .projectCard:hover { border-color: var(--accent); background: rgba(13, 19, 29, .66); }
+html[data-skin="obs"] .projectCard.done { border-left: 2px solid var(--ok); }
+
+html[data-skin="obs"] .pcTop { display: flex; align-items: center; gap: 10px; }
+html[data-skin="obs"] .pcLevel { font-size: 11.5px; letter-spacing: .1em; color: var(--const-yellow); }
+html[data-skin="obs"] .pcStatus {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .12em;
+  color: var(--text3);
+  border: 1px solid var(--line);
+  padding: 1px 5px;
+}
+html[data-skin="obs"] .projectCard.done .pcStatus { color: var(--ok); border-color: var(--ok); }
+html[data-skin="obs"] .pcMin { margin-left: auto; font-family: var(--mono); font-size: 8.5px; color: var(--text3); white-space: nowrap; }
+
+html[data-skin="obs"] .pcTitle { margin-top: 9px; font-family: var(--font); font-size: 17px; color: var(--text); font-weight: 500; }
+html[data-skin="obs"] .pcEn { font-family: var(--mono); font-size: 8.5px; letter-spacing: .14em; color: var(--text3); margin-top: 3px; }
+html[data-skin="obs"] .pcTag { margin-top: 8px; font-size: 11.5px; line-height: 1.8; color: var(--text2); min-height: 40px; }
+
+html[data-skin="obs"] .pcChips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 9px; }
+html[data-skin="obs"] .pcChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  background: var(--bg2);
+  color: var(--text3);
+  font-size: 9.5px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+html[data-skin="obs"] .pcChipK { font-family: var(--mono); font-size: 8.5px; color: var(--accent); }
+html[data-skin="obs"] a.pcChip:hover { border-color: var(--accent); color: var(--text); }
+
+html[data-skin="obs"] .pcProgress { display: flex; align-items: center; gap: 9px; margin-top: 11px; }
+html[data-skin="obs"] .pcBar { flex: 1 1 auto; height: 2px; background: var(--line); display: block; }
+html[data-skin="obs"] .pcBarFill { display: block; height: 100%; background: var(--accent); }
+html[data-skin="obs"] .projectCard.done .pcBarFill { background: var(--ok); }
+html[data-skin="obs"] .pcPct { font-family: var(--mono); font-size: 8.5px; color: var(--text3); white-space: nowrap; }
+html[data-skin="obs"] .pcGo {
+  margin-top: 11px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .1em;
+  color: var(--accent2);
+}
+html[data-skin="obs"] .pcArrow { color: var(--accent); }
+
+/* ================================================================ 02 项目详情 · 头部 */
+html[data-skin="obs"] .projHead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+html[data-skin="obs"] .projBack {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--line2);
+  background: var(--bg2);
+  color: var(--text2);
+  font-size: 11.5px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+html[data-skin="obs"] .projBack:hover { border-color: var(--accent); color: var(--text); }
+html[data-skin="obs"] .projLevel { font-size: 11.5px; letter-spacing: .1em; color: var(--const-yellow); }
+html[data-skin="obs"] .projMin { font-family: var(--mono); font-size: 8.5px; letter-spacing: .06em; color: var(--text3); }
+html[data-skin="obs"] .projProg {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .08em;
+  color: var(--text3);
+  border: 1px solid var(--line);
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+html[data-skin="obs"] .projProg.done { color: var(--ok); border-color: var(--ok); }
+
+html[data-skin="obs"] .projTitle { margin: 12px 0 0; font-family: var(--font); font-size: 26px; font-weight: 300; color: var(--text); line-height: 1.25; }
+html[data-skin="obs"] .projEn { margin-top: 5px; font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em; color: var(--text3); line-height: 1.8; }
+html[data-skin="obs"] .projChips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 11px; }
+
+html[data-skin="obs"] .projIntro {
+  margin-top: 14px;
+  padding: 13px 15px;
+  border: 1px solid var(--line);
+  background: rgba(13, 19, 29, .44);
+  font-size: 12.5px;
+  line-height: 1.95;
+  color: var(--text2);
+}
+
+html[data-skin="obs"] .projSection {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 26px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+html[data-skin="obs"] .projSectionT { font-family: var(--font); font-size: 15.5px; color: var(--text); font-weight: 500; }
+html[data-skin="obs"] .projSectionK {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .14em;
+  color: var(--text3);
+}
+
+/* ---------- 目标 ---------- */
+html[data-skin="obs"] .projGoals { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+html[data-skin="obs"] .projGoal {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  background: rgba(13, 19, 29, .32);
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: var(--text2);
+}
+html[data-skin="obs"] .projGoalK { color: var(--accent); display: inline-flex; }
+html[data-skin="obs"] .projGoalK svg { width: 12px; height: 12px; }
+html[data-skin="obs"] .projGoalT { min-width: 0; }
+
+/* ---------- 里程碑页签 ---------- */
+html[data-skin="obs"] .projTabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+html[data-skin="obs"] .projTab {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 12px;
+  background: var(--bg2);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--text3);
+  font-family: var(--font);
+  font-size: 11.5px;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+html[data-skin="obs"] .projTab:hover { color: var(--text); background: var(--surface2); }
+html[data-skin="obs"] .projTab.on { color: var(--text); background: rgba(9, 13, 20, .34); border-bottom-color: var(--accent); }
+html[data-skin="obs"] .projTab.done { color: var(--ok); }
+html[data-skin="obs"] .projTabN {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .08em;
+  color: var(--accent);
+  border: 1px solid var(--line2);
+  padding: 1px 5px;
+  flex: 0 0 auto;
+}
+html[data-skin="obs"] .projTab.on .projTabN { border-color: var(--accent); }
+html[data-skin="obs"] .projTabT { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html[data-skin="obs"] .projTabState { margin-left: auto; color: var(--ok); display: inline-flex; }
+html[data-skin="obs"] .projTabState svg { width: 11px; height: 11px; }
+
+/* ---------- 里程碑主体 ---------- */
+html[data-skin="obs"] .projBody { margin-top: 14px; }
+html[data-skin="obs"] .projMilestone { border: 1px solid var(--line); background: rgba(13, 19, 29, .5); padding: 15px 16px 17px; }
+html[data-skin="obs"] .projMTop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+html[data-skin="obs"] .projMTitle { font-family: var(--font); font-size: 15.5px; color: var(--text); font-weight: 500; }
+html[data-skin="obs"] .projDoneBadge {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ok);
+  border: 1px solid var(--ok);
+  background: var(--okSoft);
+  padding: 2px 8px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .08em;
+}
+html[data-skin="obs"] .projDoneBadge svg { width: 10px; height: 10px; }
+
+html[data-skin="obs"] .projTasks { display: flex; flex-direction: column; gap: 5px; margin-top: 12px; }
+html[data-skin="obs"] .projTask { display: flex; gap: 9px; align-items: flex-start; font-size: 11.5px; line-height: 1.8; color: var(--text2); }
+html[data-skin="obs"] .projTaskN { flex: 0 0 20px; font-family: var(--mono); font-size: 9.5px; color: var(--accent); padding-top: 3px; }
+html[data-skin="obs"] .projTaskT { min-width: 0; }
+
+html[data-skin="obs"] .projEditorHost { margin-top: 14px; }
+
+html[data-skin="obs"] .projActions { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-top: 12px; }
+html[data-skin="obs"] .projBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 13px;
+  border: 1px solid var(--line2);
+  background: var(--bg2);
+  color: var(--text2);
+  font-family: var(--font);
+  font-size: 11.5px;
+  letter-spacing: .04em;
+  cursor: pointer;
+  text-decoration: none;
+  border-radius: 0;
+}
+html[data-skin="obs"] .projBtn svg { width: 11px; height: 11px; }
+html[data-skin="obs"] .projBtn:hover { border-color: var(--accent); color: var(--text); }
+html[data-skin="obs"] .projBtn.primary { border-color: var(--accent); background: var(--accentSoft); color: var(--text); }
+html[data-skin="obs"] .projBtn.primary:hover { background: var(--accent); color: var(--bg-deep); }
+html[data-skin="obs"] .projBtn.ghost { background: none; color: var(--text3); }
+html[data-skin="obs"] .projBtn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ---------- 判分结果 ---------- */
+html[data-skin="obs"] .projResultHost { margin-top: 12px; }
+html[data-skin="obs"] .projRunNote {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: rgba(9, 13, 20, .34);
+  font-size: 11.5px;
+  color: var(--text2);
+}
+html[data-skin="obs"] .projRunNote.err { border-color: var(--err); color: var(--err); background: var(--errSoft); }
+html[data-skin="obs"] .projRunHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--line2);
+  font-size: 11.5px;
+  color: var(--text);
+}
+html[data-skin="obs"] .projRunHead.ok { border-color: var(--ok); background: var(--okSoft); }
+html[data-skin="obs"] .projRunHead.fail { border-color: var(--err); background: var(--errSoft); }
+html[data-skin="obs"] .projRunIcon svg { width: 12px; height: 12px; }
+html[data-skin="obs"] .projRunHead.ok .projRunIcon { color: var(--ok); }
+html[data-skin="obs"] .projRunHead.fail .projRunIcon { color: var(--err); }
+html[data-skin="obs"] .projRunCount { margin-left: auto; font-family: var(--mono); font-size: 9.5px; color: var(--text3); }
+
+html[data-skin="obs"] .projTestRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-top: 0;
+  background: rgba(13, 19, 29, .32);
+  font-size: 11.5px;
+  color: var(--text2);
+}
+html[data-skin="obs"] .projTestRow.ok { border-left: 2px solid var(--ok); }
+html[data-skin="obs"] .projTestRow.fail { border-left: 2px solid var(--err); }
+html[data-skin="obs"] .projTestName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html[data-skin="obs"] .projTestState { margin-left: auto; font-family: var(--mono); font-size: 8.5px; letter-spacing: .06em; white-space: nowrap; }
+html[data-skin="obs"] .projTestRow.ok .projTestState { color: var(--ok); }
+html[data-skin="obs"] .projTestRow.fail .projTestState { color: var(--err); }
+html[data-skin="obs"] .projTestDetail {
+  padding: 3px 14px 6px;
+  border: 1px solid var(--line);
+  border-top: 0;
+  background: rgba(9, 13, 20, .3);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.7;
+  color: var(--text3);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+html[data-skin="obs"] .projTestDetail.err { color: var(--err); }
+html[data-skin="obs"] .projNextRow { display: flex; justify-content: flex-end; gap: 9px; margin-top: 12px; flex-wrap: wrap; }
+
+/* ---------- 提示 / 参考实现（折叠） ---------- */
+html[data-skin="obs"] .projHints { display: flex; flex-direction: column; gap: 5px; margin-top: 14px; }
+html[data-skin="obs"] .projCollapse { border: 1px solid var(--line); background: rgba(13, 19, 29, .3); }
+html[data-skin="obs"] .projCollapseHead {
+  padding: 8px 12px;
+  font-size: 11.5px;
+  color: var(--text2);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+html[data-skin="obs"] .projCollapseHead::-webkit-details-marker { display: none; }
+html[data-skin="obs"] .projCollapseHead::before { content: '▸ '; color: var(--text3); }
+html[data-skin="obs"] details[open] > .projCollapseHead::before { content: '▾ '; }
+html[data-skin="obs"] .projCollapseBody {
+  padding: 4px 13px 12px;
+  font-size: 11.5px;
+  line-height: 1.9;
+  color: var(--text2);
+}
+html[data-skin="obs"] .projCollapseBody .projBtn { margin-top: 8px; }
+html[data-skin="obs"] .projSolCollapse { margin-top: 14px; }
+html[data-skin="obs"] .projSolutionLock { color: var(--text3); font-size: 11.5px; line-height: 1.8; }
+html[data-skin="obs"] .projCodeBox {
+  margin: 2px 0 8px;
+  max-height: 360px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  background: var(--codeBg);
+}
+html[data-skin="obs"] .projCodeBox pre { margin: 0; padding: 10px 12px; font-family: var(--mono); font-size: 11.5px; line-height: 1.7; color: var(--codeText); }
+html[data-skin="obs"] .projCodeBox .line { display: block; white-space: pre; }
+html[data-skin="obs"] .projCodeBox .ln { display: inline-block; width: 2.2em; color: var(--codeGutter); user-select: none; text-align: right; padding-right: 1em; }
+
+html[data-skin="obs"] .projExplain {
+  margin-top: 14px;
+  padding: 11px 13px;
+  border-left: 2px solid var(--accent2);
+  background: rgba(9, 13, 20, .3);
+  font-size: 11.5px;
+  line-height: 1.9;
+  color: var(--text2);
+}
+html[data-skin="obs"] .projExplain b { color: var(--const-yellow); font-weight: 400; }
+html[data-skin="obs"] .projExplain code { color: var(--accent2); }
+
+/* ---------- 扩展挑战 / 结尾 ---------- */
+html[data-skin="obs"] .projExt { display: flex; flex-direction: column; gap: 5px; }
+html[data-skin="obs"] .projExtItem {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  padding: 8px 11px;
+  border: 1px solid var(--line);
+  background: rgba(13, 19, 29, .3);
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: var(--text2);
+}
+html[data-skin="obs"] .projExtN { flex: 0 0 20px; font-family: var(--mono); font-size: 9.5px; color: var(--accent3, var(--const-yellow)); padding-top: 3px; }
+html[data-skin="obs"] .projExtT { min-width: 0; }
+html[data-skin="obs"] .projSolutionNote {
+  margin-top: 20px;
+  padding: 11px 13px;
+  border: 1px dashed var(--line2);
+  font-size: 11.5px;
+  line-height: 1.9;
+  color: var(--text3);
+}
+
+/* ================================================================ 03 响应式 */
+@media (max-width: 760px) {
+  html[data-skin="obs"] .projectsGrid { grid-template-columns: minmax(0, 1fr); }
+  html[data-skin="obs"] .pcTag { min-height: 0; }
+  html[data-skin="obs"] .projTitle { font-size: 22px; }
+  html[data-skin="obs"] .projMilestone { padding: 12px 12px 14px; }
+  html[data-skin="obs"] .projTabs { grid-template-columns: minmax(0, 1fr); }
+  html[data-skin="obs"] .projTab { padding: 8px 10px; }
+  html[data-skin="obs"] .projCodeBox { max-height: 280px; }
+  html[data-skin="obs"] .projTestDetail { font-size: 9.5px; }
+}
+
+@media (max-width: 420px) {
+  html[data-skin="obs"] .projActions { gap: 7px; }
+  html[data-skin="obs"] .projBtn { height: 28px; padding: 0 10px; font-size: 11.5px; }
+  html[data-skin="obs"] .projGoal { font-size: 11.5px; }
+  html[data-skin="obs"] .projTask { font-size: 11.5px; }
+  html[data-skin="obs"] .projExtItem { font-size: 11.5px; }
+}

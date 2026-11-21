@@ -1,0 +1,609 @@
+/* =====================================================================
+   CSC1003 · OBSERVATORY — 工具类页面外观层
+   负责：#/labs 与 #/labs/:id（交互实验室）、#/quiz（题库）、#/exam（模拟卷）、
+         以及代码编辑器 / 内存图 / viz 可视化 / 实验台内部控件
+   约定：
+   · 只写样式，不改 JS / HTML；选择器统一加 `html[data-skin="obs"]` 前缀
+   · 颜色/字号/线宽全部使用 observatory.css 的 CSS 变量，不硬编码新颜色
+   · 直角、1px 细线、无阴影、无填充大色块；读数用 Roboto Mono，标题用 Jura
+   结构：00 公共叶子 → 01 实验台索引 → 02 实验台详情 → 03 题库页
+        → 04 模拟卷 → 05 编辑器/调试/内存 → 06 viz 可视化 → 07 响应式
+   ===================================================================== */
+
+/* =====================================================================
+   00 工具页公共叶子（题库 / 模拟卷 / 编辑器 / 实验台共用的小零件）
+   ===================================================================== */
+
+/* 空状态：一条仪表细线 + 读数小字（基座是斜体正文，观测站改为 mono 读数） */
+html[data-skin="obs"] .varEmpty{
+  display: flex; align-items: center; gap: 8px; padding: 8px 0;
+  font-family: var(--mono); font-size: 8.5px; line-height: 1.9; letter-spacing: .08em;
+  font-style: normal; color: var(--text-dim);
+}
+
+html[data-skin="obs"] .varEmpty::before{
+  content: ""; flex: 0 0 14px; width: 14px; height: 1px; background: var(--line2);
+}
+
+/* 幽灵按钮的激活态（题库「错题本」开关） */
+html[data-skin="obs"] .qzBtn.ghost.on{
+  border-color: var(--const-orange); color: var(--const-orange);
+  background: rgba(224, 98, 54, .08);
+}
+
+/* 判分反馈：实际 DOM 用 .correct / .wrong（observatory 只画了 .ok / .err） */
+html[data-skin="obs"] .qzFb{ border-radius: 0; }
+html[data-skin="obs"] .qzFb.correct{ border-left-color: var(--ok); }
+html[data-skin="obs"] .qzFb.wrong{ border-left-color: var(--err); }
+html[data-skin="obs"] .qzFb.correct .qzFbHead{ color: var(--ok); background: rgba(157, 189, 138, .06); }
+html[data-skin="obs"] .qzFb.wrong .qzFbHead{ color: var(--text); background: rgba(200, 35, 55, .06); }
+
+/* 作答 / 期望输出行：mono 读数，左侧细线，答案值用黄色强调 */
+html[data-skin="obs"] .qzFbBody .ansLine{
+  margin-bottom: 8px; padding-left: 10px; border-left: 1px solid var(--line);
+  font-family: var(--mono); font-size: 10.5px; line-height: 1.85;
+  letter-spacing: .02em; color: var(--text2);
+}
+html[data-skin="obs"] .qzFbBody .ansLine b{ color: var(--const-yellow); font-weight: 400; }
+
+/* 选项对错态：基座是大色块填充，这里改细线 + 低饱和底色 */
+html[data-skin="obs"] .qzOpt, html[data-skin="obs"] .qzOpt .qn{ border-radius: 0; }
+html[data-skin="obs"] .qzOpt.ok{
+  border-color: rgba(157, 189, 138, .55); background: rgba(157, 189, 138, .06); color: var(--text-white);
+}
+html[data-skin="obs"] .qzOpt.bad{
+  border-color: rgba(200, 35, 55, .6); background: rgba(200, 35, 55, .06); color: var(--text-white);
+}
+html[data-skin="obs"] .qzOpt.ok .qn{ border-color: rgba(157, 189, 138, .55); color: var(--ok); background: none; }
+html[data-skin="obs"] .qzOpt.bad .qn{ border-color: var(--err); color: var(--text-white); background: none; }
+
+/* =====================================================================
+   01 实验台索引（#/labs）：仪器卡片墙，1px 网格 / mono 编号 / Jura 标题
+   ===================================================================== */
+
+/* 细线网格：容器只留上/左边，每张卡自带右/下边（卡片进场淡入时不会闪出整块底色） */
+html[data-skin="obs"] .chGrid{
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0; margin: 4px 0 20px; border: 1px solid var(--line); border-right: 0; border-bottom: 0;
+}
+
+html[data-skin="obs"] .chCard{
+  position: relative; display: block; padding: 16px 16px 18px 18px;
+  border: 0; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  border-radius: 0; background: rgba(9, 13, 20, .35);
+  box-shadow: none; text-decoration: none;
+}
+
+/* 悬停时左缘亮起一条橙线（压在网格线上，避免布局回流） */
+html[data-skin="obs"] .chCard::before{
+  content: ""; position: absolute; left: -1px; top: 0; bottom: 0; width: 1px;
+  background: transparent; transition: background var(--dur);
+}
+
+html[data-skin="obs"] .chCard::after{
+  content: "→"; position: absolute; right: 14px; bottom: 12px;
+  font-family: var(--mono); font-size: 11.5px; line-height: 1; color: var(--text-dim);
+  opacity: 0; transition: opacity var(--dur), color var(--dur);
+}
+
+html[data-skin="obs"] .chCard:hover{
+  background: var(--panelHi); box-shadow: none; transform: none; text-decoration: none;
+}
+html[data-skin="obs"] .chCard:hover .cti{ color: var(--const-orange); }
+html[data-skin="obs"] .chCard:hover::before{ background: var(--const-orange); }
+html[data-skin="obs"] .chCard:hover::after{ opacity: 1; color: var(--const-orange); }
+
+/* 卡片左上：站点编号（mono 大写 + 宽字距 + 一个小方标） */
+html[data-skin="obs"] .chCard .cnum{
+  position: relative; display: inline-block; padding-left: 10px;
+  font-family: var(--mono); font-size: 8.5px; letter-spacing: .2em;
+  text-transform: uppercase; color: var(--const-yellow);
+}
+html[data-skin="obs"] .chCard .cnum::before{
+  content: ""; position: absolute; left: 0; top: 50%; width: 4px; height: 4px;
+  margin-top: -2px; border: 1px solid var(--const-orange);
+}
+
+/* 标题：Jura；描述：正文 13px / 1.75 压两行 */
+html[data-skin="obs"] .chCard .cti{
+  margin: 10px 0 8px; padding-right: 22px; font-family: var(--font); font-size: 17px;
+  font-weight: 500; line-height: 1.45; letter-spacing: .04em; color: var(--text-white);
+}
+html[data-skin="obs"] .chCard .cbl{
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  font-size: 13.5px; line-height: 1.75; color: var(--text2);
+}
+
+/* =====================================================================
+   02 实验台详情（#/labs/:id）
+   ===================================================================== */
+
+/* 标题/简介已由 pageHead 提供，卡片头降级为一条仪器状态栏（图标 + INTERACTIVE） */
+html[data-skin="obs"] .pageHead + .lab{ margin-top: 0; }
+html[data-skin="obs"] .pageHead + .lab .labHead{ padding: 8px 14px; background: rgba(10, 15, 24, .72); }
+html[data-skin="obs"] .pageHead + .lab .labTt{ display: none; }
+html[data-skin="obs"] .pageHead + .lab .labIcon{ width: 22px; height: 22px; flex: 0 0 22px; }
+html[data-skin="obs"] .pageHead + .lab .labIcon svg{ width: 11px; height: 11px; }
+html[data-skin="obs"] .pageHead + .lab .labBody{ padding: 16px 16px 18px; }
+
+/* 实验台图标/角标：基座是圆角填充块，观测站改为细线方框 */
+html[data-skin="obs"] .labIcon, html[data-skin="obs"] .labTag{ border-radius: 0; background: none; }
+
+/* 舞台：给可视化留呼吸空间；窄屏允许内部横向滚动 */
+html[data-skin="obs"] .labStage{ min-height: 96px; padding: 14px 12px; overflow-x: auto; }
+html[data-skin="obs"] .labStage + .labStage{ margin-top: -1px; }
+html[data-skin="obs"] .labStage .vizSvg{ margin: 0 auto; }
+html[data-skin="obs"] .labCtl{ margin: 10px 0 0; }
+
+/* 选中态算法/模式按钮：不反白，细线 + 橙字 + 极淡橙底 */
+html[data-skin="obs"] .labBtn.on{
+  border-color: var(--const-orange); color: var(--text-white); background: rgba(224, 98, 54, .10);
+}
+html[data-skin="obs"] .labBtn svg{ width: 11px; height: 11px; }
+
+/* 滑块外壳（input 本身由 observatory.css 的 .labCtl input[type=range] 负责） */
+html[data-skin="obs"] .labSlider{
+  display: inline-flex; align-items: center; gap: 8px; height: 24px;
+  font-family: var(--mono); font-size: 8.5px; letter-spacing: .1em;
+  color: var(--text-dim); cursor: pointer;
+}
+html[data-skin="obs"] .labSlider .mono{
+  min-width: 14px; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0; color: var(--const-yellow);
+}
+
+/* 数字输入 / 下拉 */
+html[data-skin="obs"] .labNum{
+  width: 64px; height: 26px; padding: 0 8px; border: 1px solid var(--line2);
+  border-radius: 0; background: rgba(8, 12, 18, .7); color: var(--text-white);
+  font-family: var(--mono); font-size: 11.5px; outline: none;
+}
+html[data-skin="obs"] .labNum:focus, html[data-skin="obs"] .labSelect:focus{
+  border-color: var(--const-orange); outline: none;
+}
+html[data-skin="obs"] .labSelect{ color-scheme: dark; }
+
+/* 状态条：读数高亮 / 右侧步数 */
+html[data-skin="obs"] .labNote{ border-radius: 0; background: rgba(9, 13, 20, .3); }
+html[data-skin="obs"] .labNote b{ color: var(--const-yellow); font-weight: 400; }
+html[data-skin="obs"] .labStat .hot{ color: var(--const-orange); }
+html[data-skin="obs"] .labNote .ln2{
+  padding-left: 10px; border-left: 1px solid var(--line);
+  font-family: var(--mono); font-size: 8.5px; letter-spacing: .08em;
+  color: var(--text-dim); white-space: nowrap;
+}
+
+/* 实验台里内嵌的代码块 / 网格保持正文块同一套外边距（表格沿用 .tableWrap 全局样式） */
+html[data-skin="obs"] .labBody .codeBox, html[data-skin="obs"] .labBody .gridBlock{ margin: 10px 0; }
+
+/* =====================================================================
+   03 题库页（#/quiz）
+   ===================================================================== */
+
+/* 基座里的空占位（列表由 pageHead 之后直接开始） */
+html[data-skin="obs"] .quizPageHead{ margin: 0; }
+
+/* 筛选区：一条 1px 细线盒子，芯片像仪器拨台 */
+html[data-skin="obs"] .filterBar{
+  display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; padding: 9px 10px;
+  border: 1px solid var(--line); background: rgba(9, 13, 20, .35);
+}
+html[data-skin="obs"] .filterChip{
+  display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px;
+  border: 1px solid rgba(59, 78, 107, .5); border-radius: 0; background: none;
+  font-family: var(--mono); font-size: 8.5px; letter-spacing: .08em; color: var(--text-dim);
+  cursor: pointer; transition: color var(--dur), border-color var(--dur), background var(--dur);
+}
+html[data-skin="obs"] .filterChip:hover{ border-color: var(--line2); color: var(--text-white); }
+html[data-skin="obs"] .filterChip.on{
+  border-color: var(--const-orange); color: var(--text-white); background: rgba(224, 98, 54, .09);
+}
+html[data-skin="obs"] .filterChip .n{
+  margin-left: 0; font-family: var(--mono); font-size: 8.5px; color: var(--text-dim); opacity: 1;
+}
+html[data-skin="obs"] .filterChip.on .n{ color: var(--const-orange); }
+
+/* 进度行：细进度条 + 读数 */
+html[data-skin="obs"] .qzProgress{
+  display: flex; align-items: center; gap: 12px; margin: 14px 0 6px;
+  font-family: var(--mono); font-size: 8.5px; letter-spacing: .1em; color: var(--text-dim);
+}
+html[data-skin="obs"] .qzProgress .qzProgBar{ flex: 1; margin: 0; border-radius: 0; }
+html[data-skin="obs"] .qzProgress .qzStreak{ margin-left: auto; }
+html[data-skin="obs"] .qzHost{ margin: 0; }
+
+/* 按章节折叠的题组：summary 就是一条仪表栏 */
+html[data-skin="obs"] .qzGroup{
+  margin: 0 0 12px; border: 1px solid var(--line); border-radius: 0;
+  background: rgba(9, 13, 20, .3); overflow: visible;
+}
+html[data-skin="obs"] .qzGroup > summary{
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px; list-style: none;
+  border-bottom: 1px solid transparent; background: rgba(10, 15, 24, .7);
+  font-family: var(--font); font-size: 14px; font-weight: 400; letter-spacing: .03em;
+  color: var(--text2); cursor: pointer;
+}
+html[data-skin="obs"] .qzGroup > summary::before{
+  content: "+"; flex: 0 0 10px; font-family: var(--mono); font-size: 11.5px; line-height: 1; color: var(--const-orange);
+}
+html[data-skin="obs"] .qzGroup[open] > summary::before{ content: "−"; }
+html[data-skin="obs"] .qzGroup > summary:hover{ color: var(--text-white); }
+html[data-skin="obs"] .qzGroup[open] > summary{ border-bottom-color: var(--line); color: var(--text-white); }
+html[data-skin="obs"] .qzGroup > summary .qzProgress{
+  flex: 1; margin: 0; font-family: var(--font); font-size: 14px; letter-spacing: .03em;
+}
+html[data-skin="obs"] .qzGroup > summary .qzProgress b{ color: var(--text-white); font-weight: 500; }
+html[data-skin="obs"] .qzGroup > summary .dim{
+  font-family: var(--mono); font-size: 8.5px; letter-spacing: .1em;
+}
+html[data-skin="obs"] .qzGroup > summary .qzStreak{
+  font-family: var(--mono); font-size: 8.5px; letter-spacing: .08em;
+}
+html[data-skin="obs"] .qzGroup > .qzHost > .qzCard{ margin: 14px 0; }
+
+/* 全部作答完成：百分数用橙色读数，不做渐变大字 */
+html[data-skin="obs"] .qzDone{ padding: 26px 18px; text-align: center; }
+html[data-skin="obs"] .qzDone .big{
+  font-family: var(--mono); font-size: 48px; font-weight: 300; line-height: 1.1;
+  letter-spacing: -.02em; color: var(--const-orange);
+  background: none; -webkit-background-clip: border-box; background-clip: border-box;
+  -webkit-text-fill-color: currentColor;
+}
+html[data-skin="obs"] .qzDone .dim{
+  margin-top: 8px; font-family: var(--mono); font-size: 8.5px; letter-spacing: .1em; color: var(--text-dim);
+}
+html[data-skin="obs"] .qzDone .qzActions{ justify-content: center; margin-top: 16px; }
+
+/* 页内反馈卡：卡片头做成整条读数栏（基座头部是内嵌彩色条） */
+html[data-skin="obs"] .qzHost .qzFb, html[data-skin="obs"] .exQ .qzFb{ padding: 0; }
+html[data-skin="obs"] .qzHost .qzFbHead, html[data-skin="obs"] .exQ .qzFbHead{
+  padding: 9px 14px; border-bottom: 1px solid rgba(59, 78, 107, .35);
+  background: rgba(9, 13, 20, .45); font-family: var(--mono); font-size: 8.5px;
+  font-weight: 400; letter-spacing: .14em; text-transform: uppercase;
+}
+html[data-skin="obs"] .qzHost .qzFbBody, html[data-skin="obs"] .exQ .qzFbBody{ padding: 12px 14px; }
+html[data-skin="obs"] .qzHost .qzFbHead svg, html[data-skin="obs"] .exQ .qzFbHead svg{ width: 11px; height: 11px; }
+
+/* =====================================================================
+   04 模拟卷（#/exam）：试卷 = 仪表文档（细线封面 + 读数簇 + 计时器 + 答题卡）
+   ===================================================================== */
+
+html[data-skin="obs"] .exWrap{ width: 100%; max-width: none; }
+
+/* 封面 / 答题卡 / 成绩都复用 .exCover，统一按"文档卡"处理 */
+html[data-skin="obs"] .exCover{
+  position: relative; margin: 0 0 18px; padding: 22px 22px 20px;
+  border: 1px solid var(--line); border-radius: 0; background: rgba(9, 13, 20, .35);
+}
+html[data-skin="obs"] .exCover::before{
+  content: ""; position: absolute; top: -1px; right: -1px; width: 26px; height: 1px; background: var(--const-orange);
+}
+html[data-skin="obs"] .exCover h2{
+  margin: 0 0 10px; font-family: var(--font); font-weight: 300;
+  font-size: clamp(21px, 2.4vw, 26px); line-height: 1.35; letter-spacing: .04em; color: var(--text-white);
+}
+html[data-skin="obs"] .exCover h2 .pill{ margin-left: 8px; vertical-align: middle; }
+html[data-skin="obs"] .exCover .sub{
+  font-family: var(--mono); font-size: 8.5px; line-height: 1.9; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--text-dim);
+}
+html[data-skin="obs"] .exCover .sub + .sub{ margin-top: 4px; }
+
+/* 读数簇：几格拼成一条仪表条（1px 缝隙就是分隔线） */
+html[data-skin="obs"] .exInfo{
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 1px; margin: 16px 0; border: 1px solid var(--line); background: var(--line);
+}
+html[data-skin="obs"] .exInfoItem{
+  min-width: 0; padding: 9px 13px; border: 0; border-radius: 0; background: rgba(9, 13, 20, .35);
+  font-family: var(--mono); font-size: 8.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--text-dim);
+}
+html[data-skin="obs"] .exInfoItem b{
+  display: block; margin-top: 5px; font-family: var(--mono); font-size: 15.5px;
+  font-weight: 300; letter-spacing: 0; color: var(--text-white); text-transform: none;
+}
+
+/* 顶部固定答题条 */
+html[data-skin="obs"] .exBar{
+  position: sticky; top: calc(var(--top-h) + 8px); z-index: 20;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: 0 0 20px; padding: 8px 12px; border: 1px solid var(--line2);
+  border-radius: 0; background: rgba(9, 13, 20, .94); box-shadow: none;
+}
+html[data-skin="obs"] .exBar .exFile{
+  min-width: 0; max-width: 100%; margin-right: auto; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+  font-family: var(--mono); font-size: 9.5px; font-weight: 400;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--text-dim);
+}
+html[data-skin="obs"] .exBar .qzBtn{ height: 28px; padding: 0 11px; font-size: 9.5px; }
+
+/* 计时器：橙色读数；最后 5 分钟转黄，最后 1 分钟转红 */
+html[data-skin="obs"] .exTimer{
+  display: inline-flex; align-items: center; gap: 7px; padding: 3px 10px;
+  border: 1px solid rgba(224, 98, 54, .45); border-radius: 0; background: rgba(224, 98, 54, .06);
+  font-family: var(--mono); font-size: 14px; font-weight: 400; letter-spacing: .1em;
+  font-variant-numeric: tabular-nums; color: var(--const-orange);
+}
+html[data-skin="obs"] .exTimer.warn{
+  border-color: rgba(215, 171, 97, .5); background: rgba(215, 171, 97, .06); color: var(--const-yellow);
+}
+html[data-skin="obs"] .exTimer.danger{
+  border-color: rgba(200, 35, 55, .6); background: rgba(200, 35, 55, .1); color: var(--text-white);
+}
+
+/* 答题卡：等宽编号格（定宽小格左对齐，像真答题卡而不是拉伸按钮） */
+html[data-skin="obs"] .exSheet{
+  display: grid; grid-template-columns: repeat(auto-fill, 34px); gap: 5px;
+  justify-content: start; margin-top: 12px;
+}
+html[data-skin="obs"] .exSheetBtn{
+  width: auto; height: 30px; border: 1px solid var(--line); border-radius: 0;
+  background: rgba(9, 13, 20, .35); font-family: var(--mono); font-size: 10.5px; color: var(--text-dim);
+  cursor: pointer; transition: color var(--dur), border-color var(--dur), background var(--dur);
+}
+html[data-skin="obs"] .exSheetBtn:hover{ border-color: var(--line2); color: var(--text-white); }
+html[data-skin="obs"] .exSheetBtn.ans{
+  border-color: var(--const-orange); background: rgba(224, 98, 54, .08); color: var(--const-orange);
+}
+
+/* 题目文档卡 */
+html[data-skin="obs"] .exQ{
+  margin: 0 0 22px; padding: 14px 14px 16px; border: 1px solid var(--line);
+  border-radius: 0; background: rgba(9, 13, 20, .28); scroll-margin-top: calc(var(--top-h) + 20px);
+}
+html[data-skin="obs"] .exQHead{
+  display: flex; align-items: center; gap: 10px; margin: -14px -14px 14px;
+  padding: 9px 14px; border-bottom: 1px solid var(--line); background: rgba(10, 15, 24, .7);
+}
+html[data-skin="obs"] .exQNum{
+  padding: 0; border: 0; border-radius: 0; background: none;
+  font-family: var(--mono); font-size: 9.5px; font-weight: 400; letter-spacing: .16em; color: var(--const-orange);
+}
+html[data-skin="obs"] .exQScore{
+  font-family: var(--mono); font-size: 8.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-dim);
+}
+html[data-skin="obs"] .exQType{
+  margin-left: auto; padding: 2px 7px; border: 1px solid var(--line); border-radius: 0;
+  font-family: var(--mono); font-size: 8px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-dim);
+}
+html[data-skin="obs"] .exQ > .qzStem{ margin-bottom: 10px; font-size: 14px; }
+html[data-skin="obs"] .exQ .qzInput{ max-width: 420px; }
+html[data-skin="obs"] .exQ .codeBox{ margin: 12px 0; }
+
+/* 成绩大字：mono 读数，不做渐变文字 */
+html[data-skin="obs"] .big-num{
+  margin: 6px 0 10px; font-family: var(--mono); font-weight: 300;
+  font-size: clamp(34px, 5.4vw, 52px); line-height: 1.15; letter-spacing: -.02em; color: var(--const-orange);
+}
+
+/* 成绩页的「逐题解析」是独立文档标题，不需要章节编号前缀 */
+html[data-skin="obs"] .exWrap h2.blockH::before{ content: none; }
+
+/* =====================================================================
+   05 代码编辑器 / 调试面板 / 内存图
+   ===================================================================== */
+
+html[data-skin="obs"] .ed{ border-left: 2px solid var(--line2); }
+html[data-skin="obs"] .ed.traceMode{ border-left-color: var(--const-orange); }
+html[data-skin="obs"] .ed-toolbar .ed-cap{
+  margin-right: auto; font-family: var(--mono); font-size: 8.5px;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--text-dim);
+}
+html[data-skin="obs"] .ed-toolbar .ed-cap b{ color: var(--const-yellow); font-weight: 400; }
+
+/* 行号：基座的 span 内边距会把 40px 行号槽撑爆，这里归零 */
+html[data-skin="obs"] .ed-gutter span{ display: block; padding: 0; }
+html[data-skin="obs"] .ed-gutter span.cur{ color: var(--const-orange); background: rgba(224, 98, 54, .08); }
+
+/* 当前执行行的高亮条（位置/底色由 editor.js 内联写入） */
+html[data-skin="obs"] .ed-curLine{ border-top: 0; border-bottom: 0; background: transparent; }
+
+html[data-skin="obs"] .ed-outHead .st{
+  margin-left: auto; font-family: var(--mono); font-size: 8.5px;
+  letter-spacing: .1em; text-transform: none; color: var(--text-dim);
+}
+html[data-skin="obs"] .ed-outBody.empty{
+  font-family: var(--mono); font-size: 10.5px; font-style: normal;
+  letter-spacing: .06em; color: var(--text-dim);
+}
+
+/* 错误区：标题 mono，中文提示另起一段 */
+html[data-skin="obs"] .ed-err .eh{
+  font-family: var(--mono); font-size: 10.5px; font-weight: 400; letter-spacing: .02em; color: var(--text-white);
+}
+html[data-skin="obs"] .ed-err .ehint{
+  display: block; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(200, 35, 55, .25);
+  font-family: var(--font); font-size: 11.5px; line-height: 1.8; color: var(--text2);
+}
+html[data-skin="obs"] .ed-err .ehint b{ color: var(--const-yellow); }
+
+/* observatory 把 .ed-debug 写成了横向 flex，会让调试条和面板并排；这里改回纵向 */
+html[data-skin="obs"] .ed-debug{ display: block; gap: 0; background: none; }
+html[data-skin="obs"] .ed-dbgBody{ gap: 0; }
+html[data-skin="obs"] .ed-dbgBar .stepTxt{
+  font-family: var(--mono); font-size: 8.5px; letter-spacing: .08em; color: var(--text-dim);
+}
+
+/* 变量表：值列三态（普通 / 刚变化 / 引用） */
+html[data-skin="obs"] .varTable .vv{ font-size: 10.5px; color: var(--text-white); }
+html[data-skin="obs"] .varTable .vv.changed{
+  color: var(--const-yellow); font-weight: 400; border-bottom: 1px solid rgba(215, 171, 97, .5);
+}
+html[data-skin="obs"] .varTable .vv.ref{ color: var(--const-orange); }
+
+/* 调用栈 */
+html[data-skin="obs"] .stackList{ display: flex; flex-direction: column; gap: 5px; }
+html[data-skin="obs"] .stackFrame{ border-radius: 0; background: rgba(9, 13, 20, .35); }
+html[data-skin="obs"] .stackFrame.top{
+  border-color: var(--const-orange); background: rgba(224, 98, 54, .05);
+}
+html[data-skin="obs"] .stackFrame .sfv{
+  margin-top: 3px; font-family: var(--mono); font-size: 9.5px; line-height: 1.7;
+  color: var(--text2); word-break: break-all;
+}
+
+/* 内存图：左栈右堆的仪表板；引用箭头由 editor.js 用 SVG 画成橙色虚线 */
+html[data-skin="obs"] .memStack, html[data-skin="obs"] .memHeap{
+  display: flex; flex-direction: column; gap: 6px;
+}
+html[data-skin="obs"] .memFrame{ border-radius: 0; background: rgba(9, 13, 20, .35); }
+html[data-skin="obs"] .memFrame.top{
+  border-color: var(--const-orange); box-shadow: none; background: rgba(224, 98, 54, .04);
+}
+html[data-skin="obs"] .memFrameH{ border-bottom: 1px solid rgba(59, 78, 107, .3); }
+html[data-skin="obs"] .memFrameH b{ color: var(--const-yellow); font-weight: 400; }
+html[data-skin="obs"] .memFrameH .ml{
+  margin-left: auto; font-family: var(--mono); font-size: 8.5px; letter-spacing: .04em; color: var(--text-dim);
+}
+html[data-skin="obs"] .memVars{ display: flex; flex-direction: column; gap: 2px; }
+html[data-skin="obs"] .memVar{ border-radius: 0; padding: 2px 4px; font-size: 9.5px; }
+html[data-skin="obs"] .memVar.changed{
+  background: rgba(215, 171, 97, .08); border-left: 1px solid var(--const-yellow);
+}
+html[data-skin="obs"] .memVar .mn{ color: var(--text2); }
+html[data-skin="obs"] .memVar .mty{ font-size: 8.5px; color: var(--text-dim); }
+html[data-skin="obs"] .memVar .mv{ margin-left: auto; color: var(--text-white); overflow-wrap: anywhere; }
+html[data-skin="obs"] .memVar .mref{
+  border: 1px solid rgba(224, 98, 54, .4); border-radius: 0;
+  background: rgba(224, 98, 54, .08); color: var(--const-orange);
+}
+html[data-skin="obs"] .memFields{ display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; }
+html[data-skin="obs"] .memField{ font-size: 10.5px; }
+html[data-skin="obs"] .memField .fn2{ color: var(--text2); }
+html[data-skin="obs"] .memField .fv{ margin-left: auto; color: var(--text-white); overflow-wrap: anywhere; }
+html[data-skin="obs"] .memObj{ border-radius: 0; background: rgba(9, 13, 20, .35); }
+html[data-skin="obs"] .memObjH .oid{ font-weight: 400; }
+html[data-skin="obs"] .memCell{ border-radius: 0; background: rgba(9, 13, 20, .35); }
+
+/* 带引用的格子 / 字段：虚线箭头从这里出发，给一点橙色提示 */
+html[data-skin="obs"] .memCell[data-ref], html[data-skin="obs"] .memField .fv[data-ref]{
+  border-color: rgba(224, 98, 54, .45); color: var(--const-orange);
+}
+html[data-skin="obs"] .memEmpty{
+  border: 1px dashed rgba(59, 78, 107, .35); border-radius: 0;
+  font-style: normal; font-size: 9.5px; letter-spacing: .04em; color: var(--text-dim);
+}
+
+/* =====================================================================
+   06 viz 可视化（SVG）：细线 + 低饱和底，当前元素才用橙色高亮
+   ===================================================================== */
+
+html[data-skin="obs"] .vizSvg{ display: block; max-width: 100%; height: auto; }
+
+/* 圆角来自 JS 写的 rx 属性，用几何属性压平（不支持的环境保留圆角，不影响布局） */
+html[data-skin="obs"] .vizBar, html[data-skin="obs"] .vizNode, html[data-skin="obs"] .vizCell{
+  rx: 0; ry: 0;
+}
+
+html[data-skin="obs"] .vizBar, html[data-skin="obs"] .vizNode, html[data-skin="obs"] .vizCell,
+html[data-skin="obs"] .vizAxis, html[data-skin="obs"] .vizGrid, html[data-skin="obs"] .vizEdge{
+  vector-effect: non-scaling-stroke;
+}
+
+html[data-skin="obs"] .vizBar{
+  fill: rgba(59, 78, 107, .3); stroke: var(--line2); stroke-width: 1;
+  transition: fill .12s, stroke .12s, height .12s, y .12s, x .12s;
+}
+html[data-skin="obs"] .vizBar.hi{ fill: rgba(224, 98, 54, .2); stroke: var(--const-orange); }
+html[data-skin="obs"] .vizBar.done{ fill: rgba(157, 189, 138, .14); stroke: rgba(157, 189, 138, .6); }
+html[data-skin="obs"] .vizBar.dim{ fill: rgba(9, 13, 20, .2); stroke: rgba(59, 78, 107, .3); }
+
+html[data-skin="obs"] .vizCell{ fill: rgba(18, 26, 38, .55); stroke: var(--line2); stroke-width: 1; }
+html[data-skin="obs"] .vizNode{ fill: rgba(18, 26, 38, .7); stroke: var(--line2); stroke-width: 1; }
+html[data-skin="obs"] .vizNode.hi{
+  fill: rgba(224, 98, 54, .1); stroke: var(--const-orange); stroke-width: 1.2;
+}
+
+html[data-skin="obs"] .vizAxis{ stroke: var(--line2); stroke-width: 1; }
+html[data-skin="obs"] .vizGrid{ stroke: rgba(59, 78, 107, .3); stroke-width: 1; stroke-dasharray: 2 4; }
+html[data-skin="obs"] .vizEdge{ stroke: var(--line2); stroke-width: 1; fill: none; }
+html[data-skin="obs"] .vizEdge.hi{ stroke: var(--const-orange); stroke-width: 1.4; }
+html[data-skin="obs"] .vizPtr{ fill: var(--const-orange); }
+
+html[data-skin="obs"] .vizLabel{
+  fill: var(--text-dim); font-family: var(--mono); font-size: 8.5px; letter-spacing: .02em;
+}
+html[data-skin="obs"] .vizPtrText{
+  fill: var(--const-orange); font-family: var(--mono); font-size: 8.5px;
+  font-weight: 400; letter-spacing: .06em;
+}
+html[data-skin="obs"] .vizVal{
+  fill: var(--text-white); font-family: var(--mono); font-size: 9.5px; font-weight: 400;
+}
+html[data-skin="obs"] .vizCellText{ fill: var(--text-white); font-family: var(--mono); font-size: 10.5px; }
+html[data-skin="obs"] .vizText{
+  fill: var(--text); font-family: var(--font); font-size: 10.5px; letter-spacing: .04em;
+}
+
+/* =====================================================================
+   07 响应式（≤900px）：单列、不横向溢出；编辑器/可视化容器内部可滚动
+   ===================================================================== */
+
+@media (max-width: 900px){
+  /* 实验台索引：单列卡片墙 */
+  html[data-skin="obs"] .chGrid{ grid-template-columns: 1fr; margin-bottom: 16px; }
+  html[data-skin="obs"] .chCard{ padding: 14px 14px 16px 16px; }
+  html[data-skin="obs"] .chCard .cti{ font-size: 17px; }
+  html[data-skin="obs"] .chCard::after{ display: none; }
+
+  /* 实验台详情 */
+  html[data-skin="obs"] .pageHead + .lab .labBody{ padding: 14px 12px 16px; }
+  html[data-skin="obs"] .labCtl{ gap: 8px; }
+  html[data-skin="obs"] .labStage{ padding: 10px 8px; min-height: 80px; }
+  html[data-skin="obs"] .labNote{ flex-wrap: wrap; gap: 4px 8px; font-size: 8.5px; }
+  html[data-skin="obs"] .labNote .ln2{ margin-left: 0; border-left: 0; padding-left: 0; }
+
+  /* 题库筛选与题组 */
+  html[data-skin="obs"] .filterBar{ padding: 8px; gap: 5px; }
+  html[data-skin="obs"] .filterChip{ min-height: 36px; height: auto; padding: 0 9px; font-size: 8.5px; letter-spacing: .04em; }
+  /* 实验台数字输入 / 下拉：手机端触控目标 ≥36px */
+  html[data-skin="obs"] .labNum,
+  html[data-skin="obs"] .labSelect{
+    min-height: 36px;
+  }
+  html[data-skin="obs"] .qzGroup > summary{ flex-wrap: wrap; gap: 4px 10px; padding: 10px 12px; }
+  html[data-skin="obs"] .qzGroup > summary .qzProgress{
+    flex-wrap: wrap; row-gap: 3px; font-size: 13.5px;
+  }
+  html[data-skin="obs"] .qzGroup > summary .qzStreak{ flex: 1 1 100%; margin-left: 0; }
+  html[data-skin="obs"] .qzDone .big{ font-size: 38px; }
+
+  /* 模拟卷：固定条改静态，读数簇两列，题目卡压缩留白 */
+  html[data-skin="obs"] .exBar{ position: static; padding: 8px 10px; }
+  html[data-skin="obs"] .exBar .qzBtn{ height: 26px; padding: 0 9px; }
+  html[data-skin="obs"] .exCover{ padding: 16px 14px; }
+  html[data-skin="obs"] .exCover h2{ font-size: 22px; }
+  html[data-skin="obs"] .exInfo{ grid-template-columns: 1fr 1fr; }
+  html[data-skin="obs"] .exQ{ padding: 12px 12px 14px; }
+  html[data-skin="obs"] .exQHead{ margin: -12px -12px 12px; padding: 8px 12px; }
+  html[data-skin="obs"] .exQType{ letter-spacing: .08em; }
+  html[data-skin="obs"] .exSheet{ grid-template-columns: repeat(auto-fill, 30px); gap: 4px; }
+  html[data-skin="obs"] .big-num{ font-size: 38px; }
+
+  /* 编辑器：调试面板已由 observatory.css 改单列，这里只收边距 */
+  html[data-skin="obs"] .ed{ border-left-width: 1px; }
+  html[data-skin="obs"] .ed-panel{ padding: 10px; }
+}
+
+/* =====================================================================
+   08 宽屏（≥1200px）：详情页实验台加大留白，舞台更舒展
+   ===================================================================== */
+
+@media (min-width: 1200px){
+  html[data-skin="obs"] .pageHead + .lab .labBody{ padding: 20px 22px 22px; }
+  html[data-skin="obs"] .pageHead + .lab .labStage{ min-height: 160px; padding: 18px 16px; }
+}
+
+/* =====================================================================
+   09 可访问性补丁：键盘焦点
+   实验台的数字输入 / 下拉为了外观清掉了 outline，这里按 :focus-visible
+   用 1px 橙色细线补回（鼠标点击不出现，键盘 Tab 才出现）。
+   ===================================================================== */
+
+html[data-skin="obs"] .labNum:focus-visible,
+html[data-skin="obs"] .labSelect:focus-visible,
+html[data-skin="obs"] .filterChip:focus-visible{
+  outline: 1px solid var(--const-orange);
+  outline-offset: 2px;
+}

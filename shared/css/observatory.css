@@ -1,0 +1,5486 @@
+/* =====================================================================
+ * 默认显示比例：桌面端整页按 115% 显示
+ * 正文、读数、公式、间距与侧栏一起放大一档，默认阅读更舒服。
+ * 手机（<=900px）不缩放，交给浏览器自己的视口缩放。
+ * 想改比例只改这一处 --ui-zoom（1.0 恢复原样、1.25 再放大一档）。
+ * ===================================================================== */
+html[data-skin="obs"] { --ui-zoom: 1.15; }
+@media (min-width: 900px) {
+  html[data-skin="obs"] { zoom: var(--ui-zoom); }
+}
+
+/* =====================================================================
+   CSC1003 · OBSERVATORY 外观层（NASA-Punk Observatory 设计语言）
+   职责：在 app.css 基座之上叠加「深空天文台」视觉系统。
+   设计来源：flowersauce/NASA-Punk_Observatory（MIT）
+     · 深空海军蓝 + 程序化地形等高线 + 星点
+     · Jura（标题/UI） + Roboto Mono（仪表读数）
+     · 红 #c82337 / 橙 #e06236 / 黄 #d7ab61 / 蓝 #2f4c79 四色色标
+     · 极细线框、超宽字距、终端读数、目标准心、四色幕布转场
+   结构：00 令牌覆盖 → 01 氛围层 → 02 外壳 → 03 元件 → 04 首页星图
+        → 05 章节阅读 → 06 代码/编辑器 → 07 交互组件 → 08 目录栏
+        → 09 动效 → 10 响应式 → 11 降级
+   ===================================================================== */
+
+/* ---------------------------------------------------------------- 00 令牌覆盖
+   与 app.css 的 html[data-theme] 同权重且后加载 → 覆盖成功。
+   浅色主题已按决定停用，保留同值映射以防旧 localStorage 值造成闪烁。
+   ------------------------------------------------------------------ */
+html[data-theme="dark"]{
+  color-scheme: dark;
+
+  --bg-navy: #0e141f;
+  --bg-deep: #090d14;
+  --bg-soft: #111927;
+  --line-color: #3b4e6b;
+  --const-red: #c82337;
+  --const-orange: #e06236;
+  --const-yellow: #d7ab61;
+  --const-blue: #2f4c79;
+  --text-white: #eef2f8;
+  /* 次要读数色：原 #6d7d8c 在 --bg-soft/--surface2 上对比度仅 4.1–4.2:1（低于正文 4.5:1）；
+     微调为 #7b8a99 后在全部深底表面 4.9–5.5:1，仍保持「暗读数」层级（对比 --text2 8.3–9.2:1）。 */
+  --text-dim: #7b8a99;
+
+  --sidebar-w: 264px;
+  --rail-w: 224px;
+  --top-h: 56px;
+  --maxw: 842px;
+  --edgebar-w: 12px;
+  --edgebar-gap: 40px;
+  --edgebar-space: 66px;
+
+  /* JS 运行时写入的布局变量（此处给默认值，静态检查也有据可查） */
+  --sys-scale: 1;
+  --cx: 50%;
+  --cy: 57%;
+  --orbit-color: rgba(59, 78, 107, .42);
+  --orbit-color-hot: var(--const-yellow);
+  --i: 0;
+  --planet-accent: var(--const-yellow);
+  --size: 40px;
+  --part: var(--const-yellow);
+  --part-soft: rgba(215, 171, 97, .07);
+  --lx: 36%;
+  --ly: 32%;
+  --mo: 1.7;
+  --mdur: 24s;
+  --mdir: normal;
+
+  --r-sm: 0px;
+  --r-md: 0px;
+  --r-lg: 0px;
+  --r-xl: 0px;
+
+  --font: 'Jura', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+          'Noto Sans SC', 'Source Han Sans SC', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'Roboto Mono', ui-monospace, 'SF Mono', SFMono-Regular, Menlo,
+          Consolas, 'Cascadia Code', 'Liberation Mono', monospace;
+  --cjk: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+
+  --bg: var(--bg-navy);
+  --bg2: var(--bg-deep);
+  --surface: rgba(13, 19, 29, .62);
+  --surface2: #121a26;
+  --surface3: #18222f;
+  --line: rgba(59, 78, 107, .46);
+  --line2: rgba(59, 78, 107, .78);
+
+  --text: #eef2f8;
+  --text2: #93a1b3;
+  --text3: #7b8a99;   /* 同 --text-dim：深底上次要文字保持 ≥4.9:1，可读性微调 */
+
+  --accent: var(--const-orange);
+  --accent2: #9fc0e2;
+  --accent3: var(--const-yellow);
+  --accentSoft: rgba(224, 98, 54, .10);
+  --accentSoft2: rgba(224, 98, 54, .05);
+
+  --ok: #9dbd8a;
+  --okSoft: rgba(157, 189, 138, .10);
+  --warn: var(--const-yellow);
+  --warnSoft: rgba(215, 171, 97, .10);
+  --err: var(--const-red);
+  --errSoft: rgba(200, 35, 55, .13);
+  --info: #9fc0e2;
+  --infoSoft: rgba(159, 192, 226, .10);
+
+  --codeBg: #0a0f17;
+  --codeLine: #0f1724;
+  --codeGutter: #44536a;
+  --codeText: #eef2f8;
+
+  --shadow: none;
+  --shadow2: none;
+  --glow: 0 0 0 1px rgba(224, 98, 54, .55), 0 0 26px -8px rgba(224, 98, 54, .55);
+  --focusRing: 0 0 0 1px var(--const-orange);
+
+  --grad-brand: linear-gradient(180deg,
+    var(--const-red) 0 25%,
+    var(--const-orange) 25% 50%,
+    var(--const-yellow) 50% 75%,
+    var(--const-blue) 75% 100%);
+  --grad-warm: linear-gradient(180deg, var(--const-yellow), var(--const-red));
+
+  --tk-kw: #e06236;
+  --tk-type: #9fc0e2;
+  --tk-str: #b6cc98;
+  --tk-num: #d7ab61;
+  --tk-cmt: #5d6d80;
+  --tk-fn: #8fd0d6;
+  --tk-op: #93a1b3;
+  --tk-meth: #d7ab61;
+
+  --hazardA: var(--const-orange);
+  --hazardB: var(--bg-navy);
+  --gridLine: rgba(59, 78, 107, .16);
+  --scanLine: transparent;
+  --panelHi: rgba(232, 232, 232, .03);
+  --panelTop: var(--bg-navy);
+  --panelBottom: var(--bg-deep);
+
+  --ease: cubic-bezier(.2, .9, .25, 1);
+  --dur: .16s;
+
+  /* 观测站签名色别名（observatory.js 优先读取这组，缺失时回退 canonical） */
+  --obs-bg: var(--bg-navy);
+  --obs-line: var(--line-color);
+  --obs-red: var(--const-red);
+  --obs-orange: var(--const-orange);
+  --obs-yellow: var(--const-yellow);
+  --obs-blue: var(--const-blue);
+  --obs-white: var(--text-white);
+  --obs-dim: var(--text-dim);
+}
+
+/* 字体：Jura 负责拉丁标题与仪表字，中文自动回退系统黑体 */
+@font-face {
+  font-family: 'Jura';
+  src: url('../fonts/Jura-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Jura';
+  src: url('../fonts/Jura-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Jura';
+  src: url('../fonts/Jura-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Roboto Mono';
+  src: url('../fonts/RobotoMono-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Roboto Mono';
+  src: url('../fonts/RobotoMono-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ---------------------------------------------------------------- 01 氛围层 */
+html[data-skin="obs"]{
+  background: var(--bg-deep);
+  scrollbar-color: rgba(109, 125, 140, .5) transparent;
+}
+
+html[data-skin="obs"] body{
+  background-color: var(--bg-navy);
+  background-image:
+    radial-gradient(120% 80% at 50% -10%, rgba(47, 76, 121, .22), transparent 60%),
+    radial-gradient(90% 60% at 78% 108%, rgba(200, 35, 55, .07), transparent 62%);
+  background-attachment: fixed;
+  background-repeat: no-repeat, no-repeat;
+  background-size: 100% 100%, 100% 100%;
+  font-family: var(--font);
+  color: var(--text);
+  cursor: default;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 旧的星点 + 轨道环底纹与扫描线全部停用，改由 #topoCanvas 程序化绘制 */
+html[data-skin="obs"] body::before, html[data-skin="obs"] body::after{
+  content: none !important;
+}
+
+html[data-skin="obs"] #topoCanvas{
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: .5;
+}
+
+/* 内容始终压在地形之上 */
+html[data-skin="obs"] .app{
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: block;
+}
+
+html[data-skin="obs"] ::selection{
+  background: var(--const-orange);
+  color: #0b0f16;
+}
+
+html[data-skin="obs"] ::-webkit-scrollbar{
+  width: 9px;
+  height: 9px;
+}
+
+html[data-skin="obs"] ::-webkit-scrollbar-track{
+  background: transparent;
+}
+
+html[data-skin="obs"] ::-webkit-scrollbar-thumb{
+  background: rgba(59, 78, 107, .8);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+html[data-skin="obs"] ::-webkit-scrollbar-thumb:hover{
+  background: rgba(109, 125, 140, .9);
+  background-clip: content-box;
+}
+
+html[data-skin="obs"] :focus-visible{
+  outline: 1px solid var(--const-orange);
+  outline-offset: 2px;
+}
+
+/* 四色色标（右侧竖条，serif 边条） */
+html[data-skin="obs"] .edgebar{
+  position: fixed;
+  top: 0;
+  right: var(--edgebar-gap);
+  bottom: 0;
+  width: var(--edgebar-w);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  box-shadow: -4px 0 15px rgba(0, 0, 0, .35);
+}
+
+html[data-skin="obs"] .edgebar i{
+  flex: 1 1 25%;
+}
+
+html[data-skin="obs"] .edgebar .s1{ background: var(--const-red); }
+html[data-skin="obs"] .edgebar .s2{ background: var(--const-orange); }
+html[data-skin="obs"] .edgebar .s3{ background: var(--const-yellow); }
+html[data-skin="obs"] .edgebar .s4{ background: var(--const-blue); }
+
+/* 四色幕布转场 */
+html[data-skin="obs"] .curtain{
+  position: fixed;
+  top: 0;
+  left: -50%;
+  width: 200%;
+  height: 100%;
+  z-index: 9998;
+  pointer-events: none;
+  display: flex;
+  transform: skewX(-15deg) translateX(-100%);
+  visibility: hidden;
+}
+
+html[data-skin="obs"] .curtain.on{ visibility: visible; }
+
+html[data-skin="obs"] .curtain i{
+  flex: 1;
+  height: 100%;
+  transform: scaleX(1.1);
+}
+
+html[data-skin="obs"] .curtain .c1{ background: var(--const-red); }
+html[data-skin="obs"] .curtain .c2{ background: var(--const-orange); }
+html[data-skin="obs"] .curtain .c3{ background: var(--const-yellow); }
+html[data-skin="obs"] .curtain .c4{ background: var(--const-blue); }
+
+html[data-skin="obs"] .curtain.in{
+  animation: curtain-in .46s cubic-bezier(.7, 0, .3, 1) forwards;
+}
+
+html[data-skin="obs"] .curtain.out{
+  animation: curtain-out .5s cubic-bezier(.7, 0, .3, 1) forwards;
+}
+
+@keyframes curtain-in {
+  from { transform: skewX(-15deg) translateX(-100%); }
+  to { transform: skewX(-15deg) translateX(0%); }
+}
+
+@keyframes curtain-out {
+  from { transform: skewX(-15deg) translateX(0%); }
+  to { transform: skewX(-15deg) translateX(100%); }
+}
+
+/* 启动终端 */
+html[data-skin="obs"] .boot{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(24, 35, 52, .85), transparent 62%),
+    var(--bg-deep);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  transition: opacity .5s var(--ease), visibility .5s;
+}
+
+html[data-skin="obs"] .boot.done, html[data-skin="obs"] .boot.boot-done, html[data-skin="obs"] .boot.out{
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+html[data-skin="obs"] .bootWatermark{
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: clamp(120px, 20vw, 300px);
+  letter-spacing: .06em;
+  white-space: nowrap;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(59, 78, 107, .3);
+  opacity: .55;
+  pointer-events: none;
+  user-select: none;
+}
+
+html[data-skin="obs"] .boot .bootInner{
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: min(640px, 84vw);
+  font-family: var(--mono);
+}
+
+/* 观测窗四角：让启动画面像一台正在初始化的仪器 */
+html[data-skin="obs"] .boot .bootInner::before, html[data-skin="obs"] .boot .bootInner::after{
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: rgba(59, 78, 107, .9);
+  border-style: solid;
+  pointer-events: none;
+}
+
+html[data-skin="obs"] .boot .bootInner::before{
+  left: -18px;
+  top: -16px;
+  border-width: 1px 0 0 1px;
+}
+
+html[data-skin="obs"] .boot .bootInner::after{
+  right: -18px;
+  bottom: -16px;
+  border-width: 0 1px 1px 0;
+}
+
+html[data-skin="obs"] .bootHead{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  font-size: 8.5px;
+  letter-spacing: .16em;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--line2);
+  padding-bottom: 10px;
+  text-transform: uppercase;
+}
+
+html[data-skin="obs"] .bootHead b{
+  color: var(--const-yellow);
+  font-weight: 400;
+}
+
+html[data-skin="obs"] .bootTerm{
+  margin: 26px 0 24px;
+  font-size: 11.5px;
+  line-height: 2.2;
+  letter-spacing: .05em;
+  color: var(--text2);
+  min-height: 148px;
+  white-space: pre-wrap;
+}
+
+html[data-skin="obs"] .bootTerm .bootLine{
+  opacity: 0;
+  animation: bootLine .2s ease forwards;
+}
+
+html[data-skin="obs"] .bootTerm .bootLine b{
+  color: var(--const-orange);
+  font-weight: 400;
+}
+
+html[data-skin="obs"] .bootTerm .bootLine i{
+  font-style: normal;
+  color: var(--text-dim);
+}
+
+@keyframes bootLine {
+  to { opacity: 1; }
+}
+
+html[data-skin="obs"] .bootBar{
+  height: 1px;
+  background: var(--line);
+  position: relative;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+html[data-skin="obs"] .bootBar i{
+  position: absolute;
+  inset: 0;
+  background: var(--const-orange);
+  transform-origin: left center;
+  animation: bootBar 1.5s cubic-bezier(.4, 0, .2, 1) forwards;
+}
+
+@keyframes bootBar {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+html[data-skin="obs"] .bootHint{
+  margin-top: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  font-size: 8.5px;
+  letter-spacing: .18em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+html[data-skin="obs"] .bootHint .cursor{
+  color: var(--const-orange);
+  animation: blink 1.1s step-end infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* ---------------------------------------------------------------- 02 外壳 */
+html[data-skin="obs"] .sidebar{
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--sidebar-w);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, rgba(11, 16, 24, .94) 0%, rgba(9, 13, 20, .97) 100%);
+  border-right: 1px solid var(--line);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* 侧栏顶部：品牌 + 读数 */
+/* 品牌块：点击回到初始页（星图） */
+a.brand{
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+a.brand:hover .brandMark{
+  filter: drop-shadow(0 0 8px rgba(224, 98, 54, .45));
+}
+
+a.brand:hover .s{
+  color: var(--const-orange);
+}
+
+a.brand:focus-visible{
+  outline: 1px solid var(--const-orange);
+  outline-offset: -2px;
+}
+
+html[data-skin="obs"] .brand{
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 18px 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+html[data-skin="obs"] .brand::after{
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 46px;
+  height: 1px;
+  background: var(--const-orange);
+}
+
+html[data-skin="obs"] .brandMark{
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 0;
+  border: 0;
+  background: none;
+  padding: 0;
+  box-shadow: none;
+}
+
+html[data-skin="obs"] .brandMark svg{
+  width: 44px;
+  height: 44px;
+  display: block;
+}
+
+html[data-skin="obs"] .brand .tt{
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+html[data-skin="obs"] .brand .t{
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-family: var(--font);
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: .14em;
+  color: var(--text-white);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+html[data-skin="obs"] .brand .t .tzh{
+  font-size: 15.5px;
+  letter-spacing: .18em;
+  color: var(--text-white);
+}
+
+html[data-skin="obs"] .brand .s{
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .24em;
+  color: var(--const-yellow);
+  text-transform: uppercase;
+  margin-top: 5px;
+  white-space: nowrap;
+}
+
+/* 系统读数面板：只用细线，不填色 */
+html[data-skin="obs"] .sysPanel{
+  margin: 16px 16px 6px;
+  border: 1px solid var(--line);
+  border-top-color: var(--line2);
+  background: rgba(9, 13, 20, .4);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .1em;
+  position: relative;
+}
+
+html[data-skin="obs"] .sysPanel::before{
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  width: 24px;
+  height: 1px;
+  background: var(--const-orange);
+}
+
+html[data-skin="obs"] .sysRow{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 9px;
+  border-bottom: 1px solid rgba(59, 78, 107, .28);
+  color: var(--text-dim);
+}
+
+html[data-skin="obs"] .sysRow:last-child{
+  border-bottom: 0;
+}
+
+html[data-skin="obs"] .sysK{
+  letter-spacing: .2em;
+  color: var(--text-dim);
+}
+
+html[data-skin="obs"] .sysV{
+  color: var(--text2);
+  display: inline-flex;
+  align-items: center;
+  letter-spacing: .08em;
+}
+
+html[data-skin="obs"] .led{
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 8px var(--ok);
+  margin-right: 6px;
+  flex: 0 0 4px;
+  animation: ledPulse 2.6s ease-in-out infinite;
+}
+
+@keyframes ledPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .3; }
+}
+
+/* 课程导航：Part 分组 + 细线选中态 */
+html[data-skin="obs"] .nav{
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 14px 16px 18px;
+}
+
+html[data-skin="obs"] .navGroup{
+  margin-bottom: 4px;
+}
+
+html[data-skin="obs"] .navGroupT{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 16px 0 7px;
+}
+
+html[data-skin="obs"] .navGroupT::after{
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+html[data-skin="obs"] .navItem{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 6px 10px;
+  margin: 0;
+  border: 0;
+  border-left: 1px solid transparent;
+  color: var(--text2);
+  font-size: 12.5px;
+  font-weight: 400;
+  letter-spacing: .02em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--dur), border-color var(--dur), background var(--dur);
+}
+
+html[data-skin="obs"] .navItem:hover{
+  color: var(--text-white);
+  border-left-color: var(--line2);
+  background: rgba(232, 232, 232, .028);
+  text-decoration: none;
+}
+
+html[data-skin="obs"] .navItem.active{
+  color: var(--text-white);
+  border-left-color: var(--const-orange);
+  background: linear-gradient(90deg, rgba(224, 98, 54, .12), transparent 80%);
+}
+
+html[data-skin="obs"] .navItem.active::before{
+  content: none;
+}
+
+html[data-skin="obs"] .navNum{
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .1em;
+  color: var(--text-dim);
+  min-width: 20px;
+  flex: 0 0 auto;
+}
+
+html[data-skin="obs"] .navNum svg{
+  width: 13px;
+  height: 13px;
+  display: block;
+}
+
+html[data-skin="obs"] .navItem.active .navNum{
+  color: var(--const-orange);
+}
+
+html[data-skin="obs"] .navTxt{
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-skin="obs"] .sideFoot{
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 9px 12px 11px 14px;
+  border-top: 1px solid var(--line);
+}
+
+html[data-skin="obs"] .sideTools{
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-right: auto;
+}
+
+html[data-skin="obs"] .sideTools .iconBtn{
+  width: 26px;
+  height: 26px;
+}
+
+html[data-skin="obs"] .sideTools .iconBtn svg{
+  width: 13px;
+  height: 13px;
+}
+
+html[data-skin="obs"] .footVer, html[data-skin="obs"] .footTag{
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .16em;
+  color: var(--text-dim);
+}
+
+html[data-skin="obs"] .footTag{
+  margin-left: auto;
+}
+
+html[data-skin="obs"] .iconBtn{
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text-dim);
+  background: none;
+  transition: color var(--dur), border-color var(--dur);
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+
+html[data-skin="obs"] .iconBtn:hover{
+  color: var(--text-white);
+  border-color: var(--line2);
+  background: none;
+}
+
+html[data-skin="obs"] .iconBtn svg{
+  width: 15px;
+  height: 15px;
+}
+
+/* 主区 */
+html[data-skin="obs"] .main{
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--sidebar-w);
+  padding-right: calc(var(--edgebar-space) - 6px);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* 顶栏：细线 HUD，无填充面板 */
+html[data-skin="obs"] .topbar{
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  height: var(--top-h);
+  margin: 0;
+  padding: 0 10px 0 34px;
+  background: linear-gradient(180deg, rgba(14, 20, 31, .96) 0%, rgba(14, 20, 31, .84) 100%);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* 模块读数 */
+html[data-skin="obs"] .gauge{
+  display: flex;
+  align-items: stretch;
+  height: 34px;
+  flex: 0 0 auto;
+  border: 0;
+  border-left: 1px solid var(--line2);
+  background: none;
+  padding-left: 12px;
+  position: relative;
+}
+
+html[data-skin="obs"] .gauge::before{
+  content: none;
+}
+
+html[data-skin="obs"] .gaugeMain{
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0 14px 0 0;
+  border-right: 1px solid var(--line);
+  min-width: 0;
+}
+
+html[data-skin="obs"] .gaugeK{
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .2em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+html[data-skin="obs"] .gaugeNum{
+  font-family: var(--font);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: .12em;
+  line-height: 1;
+  color: var(--text-white);
+}
+
+html[data-skin="obs"] .gaugeSide{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding-left: 14px;
+  min-width: 0;
+}
+
+html[data-skin="obs"] .gaugeName{
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .16em;
+  color: var(--const-yellow);
+  text-transform: uppercase;
+  white-space: nowrap;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 搜索：一条细线框 */
+html[data-skin="obs"] .searchWrap{
+  position: relative;
+  flex: 1;
+  max-width: 460px;
+  display: flex;
+  align-items: center;
+  margin-left: 6px;
+}
+
+html[data-skin="obs"] .searchIcon{
+  position: absolute;
+  left: 12px;
+  width: 11px;
+  height: 11px;
+  pointer-events: none;
+  border: 1px solid var(--text-dim);
+  border-radius: 50%;
+}
+
+html[data-skin="obs"] .searchIcon::after{
+  content: "";
+  position: absolute;
+  right: -4px;
+  bottom: -3px;
+  width: 6px;
+  height: 1px;
+  background: var(--text-dim);
+  transform: rotate(45deg);
+  border-radius: 0;
+}
+
+html[data-skin="obs"] #q{
+  width: 100%;
+  height: 32px;
+  padding: 0 54px 0 32px;
+  background: rgba(9, 13, 20, .5);
+  border: 1px solid var(--line);
+  border-radius: 0;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  color: var(--text-white);
+  outline: none;
+  transition: border-color var(--dur), background var(--dur);
+}
+
+html[data-skin="obs"] #q::placeholder{
+  color: var(--text-dim);
+  letter-spacing: .04em;
+}
+
+html[data-skin="obs"] #q:focus{
+  border-color: var(--const-orange);
+  box-shadow: none;
+  background: rgba(9, 13, 20, .82);
+}
+
+html[data-skin="obs"] .searchKbd{
+  position: absolute;
+  right: 9px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .1em;
+  border: 1px solid var(--line);
+  padding: 1px 5px;
+  color: var(--text-dim);
+}
+
+html[data-skin="obs"] .topActions{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+html[data-skin="obs"] .pillBtn{
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 0;
+  background: none;
+  border: 1px solid var(--line2);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 400;
+  letter-spacing: .18em;
+  color: var(--text2);
+  text-transform: uppercase;
+  transition: all var(--dur);
+  cursor: pointer;
+}
+
+html[data-skin="obs"] .pillBtn:hover{
+  border-color: var(--const-orange);
+  color: var(--text-white);
+}
+
+html[data-skin="obs"] .pillBtn .dot{
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--const-orange);
+  box-shadow: 0 0 8px var(--const-orange);
+}
+
+html[data-skin="obs"] .onlyMobile{
+  display: none !important;
+}
+
+/* 正文区 */
+html[data-skin="obs"] .body{
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 48px;
+  padding-top: 30px;
+}
+
+html[data-skin="obs"] .contentWrap{
+  flex: 1;
+  min-width: 0;
+  max-width: var(--maxw);
+  padding-bottom: 140px;
+}
+
+html[data-skin="obs"] .content{
+  padding-top: 0;
+  outline: none;
+}
+
+/* 搜索结果 */
+html[data-skin="obs"] .results{
+  position: fixed;
+  top: calc(var(--top-h) + 8px);
+  left: calc(var(--sidebar-w) + 34px);
+  width: min(680px, calc(100vw - var(--sidebar-w) - 130px));
+  z-index: 62;
+  background: rgba(10, 15, 24, .97);
+  border: 1px solid var(--line2);
+  border-radius: 0;
+  box-shadow: 0 18px 40px -20px rgba(0, 0, 0, .8);
+  margin: 0;
+  max-height: min(66vh, 560px);
+  overflow-y: auto;
+  padding: 4px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 24px 60px -30px rgba(0, 0, 0, .9);
+}
+
+html[data-skin="obs"] .results[hidden]{
+  display: none !important;
+}
+
+html[data-skin="obs"] .resHead{
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .2em;
+  color: var(--text-dim);
+  padding: 9px 12px 7px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--line);
+}
+
+html[data-skin="obs"] .resItem{
+  display: block;
+  padding: 9px 12px;
+  border-radius: 0;
+  border-left: 1px solid transparent;
+  cursor: pointer;
+}
+
+html[data-skin="obs"] .resItem:hover, html[data-skin="obs"] .resItem.sel{
+  background: rgba(232, 232, 232, .03);
+  border-left-color: var(--const-orange);
+}
+
+html[data-skin="obs"] .resItem .rt{
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--text-white);
+}
+
+html[data-skin="obs"] .resItem .rs{
+  font-size: 10.5px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-skin="obs"] .resItem mark{
+  background: rgba(224, 98, 54, .16);
+  color: var(--const-orange);
+  border-radius: 0;
+  padding: 0 2px;
+}
+
+html[data-skin="obs"] .resEmpty{
+  padding: 22px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 11.5px;
+  font-family: var(--mono);
+  letter-spacing: .1em;
+}
+
+/* ---------------------------------------------------------------- 03 元件 */
+/* 标签 / 行内代码 */
+html[data-skin="obs"] .hl{
+  color: var(--const-orange);
+  background: none;
+}
+
+html[data-skin="obs"] .dim{
+  color: var(--text-dim);
+}
+
+html[data-skin="obs"] .mono{
+  font-family: var(--mono);
+}
+
+html[data-skin="obs"] .pill{
+  display: inline-block;
+  padding: 1px 7px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .1em;
+  color: var(--text2);
+  background: none;
+}
+
+html[data-skin="obs"] .pill.ok{ color: var(--ok); border-color: rgba(157, 189, 138, .45); }
+html[data-skin="obs"] .pill.warn{ color: var(--const-yellow); border-color: rgba(215, 171, 97, .45); }
+html[data-skin="obs"] .pill.err{ color: var(--err); border-color: rgba(200, 35, 55, .5); }
+html[data-skin="obs"] .pill.info{ color: var(--accent2); border-color: rgba(159, 192, 226, .4); }
+
+html[data-skin="obs"] .kbd, html[data-skin="obs"] .content kbd{
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: .86em;
+  line-height: 1.5;
+  padding: 0 5px;
+  border: 1px solid var(--line2);
+  border-radius: 0;
+  color: var(--const-yellow);
+  background: rgba(9, 13, 20, .5);
+}
+
+html[data-skin="obs"] .content code:not([class]){
+  font-family: var(--mono);
+  font-size: .88em;
+  color: var(--const-yellow);
+  background: rgba(232, 232, 232, .04);
+  border: 1px solid rgba(59, 78, 107, .4);
+  padding: .5px 5px;
+  letter-spacing: .02em;
+}
+
+html[data-skin="obs"] .content a{
+  color: var(--const-orange);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(224, 98, 54, .35);
+}
+
+html[data-skin="obs"] .content a:hover{
+  border-bottom-color: var(--const-orange);
+  text-decoration: none;
+}
+
+/* HUD 按钮 */
+html[data-skin="obs"] .btnPrimary, html[data-skin="obs"] .btnGhost, html[data-skin="obs"] .qzBtn, html[data-skin="obs"] .ed-btn{
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 0;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: .08em;
+  cursor: pointer;
+  transition: all var(--dur);
+  position: relative;
+  background: none;
+}
+
+html[data-skin="obs"] .btnPrimary{
+  border: 1px solid var(--const-orange);
+  color: var(--text-white);
+  background: rgba(224, 98, 54, .10);
+}
+
+html[data-skin="obs"] .btnPrimary:hover{
+  background: var(--const-orange);
+  color: #0b0f16;
+}
+
+html[data-skin="obs"] .btnGhost{
+  border: 1px solid var(--line2);
+  color: var(--text2);
+}
+
+html[data-skin="obs"] .btnGhost:hover{
+  border-color: var(--const-yellow);
+  color: var(--const-yellow);
+}
+
+html[data-skin="obs"] .btnPrimary svg, html[data-skin="obs"] .btnGhost svg{
+  width: 13px;
+  height: 13px;
+}
+
+/* 实验台滑块：与 FOV 滑块同一套细线 + 方形滑块外观 */
+html[data-skin="obs"] .labCtl input[type="range"]{
+  -webkit-appearance: none;
+  appearance: none;
+  height: 14px;
+  background: transparent;
+  cursor: col-resize;
+  min-width: 120px;
+}
+
+html[data-skin="obs"] .labCtl input[type="range"]::-webkit-slider-runnable-track{
+  height: 1px;
+  background: var(--line-color);
+}
+
+html[data-skin="obs"] .labCtl input[type="range"]::-moz-range-track{
+  height: 1px;
+  background: var(--line-color);
+}
+
+html[data-skin="obs"] .labCtl input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  margin-top: -4.5px;
+  background: var(--bg-navy);
+  border: 1px solid var(--const-orange);
+  border-radius: 0;
+}
+
+html[data-skin="obs"] .labCtl input[type="range"]::-moz-range-thumb{
+  width: 10px;
+  height: 10px;
+  background: var(--bg-navy);
+  border: 1px solid var(--const-orange);
+  border-radius: 0;
+}
+
+/* 终端 / 读数 */
+html[data-skin="obs"] .termOut{
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 2;
+  letter-spacing: .06em;
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+html[data-skin="obs"] .termOut .cursor, html[data-skin="obs"] .cursor, html[data-skin="obs"] .termCursor{
+  color: var(--const-orange);
+  font-weight: 400;
+  animation: blink 1.05s step-end infinite;
+}
+
+/* 分隔线与小节标题 */
+html[data-skin="obs"] .divider{
+  border: 0;
+  height: 1px;
+  background: var(--line);
+  margin: 34px 0;
+}
+
+html[data-skin="obs"] .secTitle{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 42px 0 18px;
+}
+
+html[data-skin="obs"] .secTitle::after{
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+/* toast / modal / 返回顶部 */
+html[data-skin="obs"] .toast{
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%) translateY(12px);
+  z-index: 200;
+  padding: 9px 16px;
+  border: 1px solid var(--line2);
+  background: rgba(9, 13, 20, .96);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .08em;
+  color: var(--text2);
+  opacity: 0;
+  pointer-events: none;
+  transition: all .22s var(--ease);
+  border-radius: 0;
+}
+
+html[data-skin="obs"] .toast.on{
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+html[data-skin="obs"] .toast.ok{ border-color: rgba(157, 189, 138, .6); color: var(--ok); }
+html[data-skin="obs"] .toast.warn{ border-color: rgba(215, 171, 97, .6); color: var(--const-yellow); }
+html[data-skin="obs"] .toast.err{ border-color: rgba(200, 35, 55, .7); color: var(--err); }
+
+html[data-skin="obs"] .modal{
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  display: grid;
+  place-items: center;
+  background: rgba(5, 8, 12, .78);
+  backdrop-filter: blur(3px);
+  padding: 20px;
+}
+
+html[data-skin="obs"] .modalCard, html[data-skin="obs"] .modal > div{
+  background: var(--bg-navy);
+  border: 1px solid var(--line2);
+  border-radius: 0;
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, .9);
+  max-width: min(720px, 92vw);
+  max-height: 86vh;
+  overflow-y: auto;
+}
+
+html[data-skin="obs"] .toTop{
+  position: fixed;
+  right: calc(var(--edgebar-gap) + var(--edgebar-w) + 18px);
+  bottom: 22px;
+  z-index: 120;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line2);
+  background: rgba(9, 13, 20, .8);
+  color: var(--text2);
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: all var(--dur);
+  border-radius: 0;
+  cursor: pointer;
+}
+
+html[data-skin="obs"] .toTop.on{
+  opacity: 1;
+  pointer-events: auto;
+}
+
+html[data-skin="obs"] .toTop:hover{
+  border-color: var(--const-orange);
+  color: var(--const-orange);
+}
+
+html[data-skin="obs"] .toTop svg{
+  width: 14px;
+  height: 14px;
+}
+
+/* 模态框内部通用排版 */
+html[data-skin="obs"] .modal h3, html[data-skin="obs"] .modal h4{
+  font-family: var(--font);
+  font-weight: 500;
+  letter-spacing: .06em;
+}
+
+html[data-skin="obs"] .modal .qzCard{
+  border: 0;
+}
+
+/* ---------------------------------------------------------------- 04 首页太阳系 */
+/* 横向真实太阳系：左侧太阳，向右沿轴排列 14 个天体（8 行星 + 6 矮行星/小行星）；
+   每颗天体下方垂下入口节点树（章节 / 实验台 / 题库）；纯黑网格 + 写实球体纹理。 */
+
+html[data-skin="obs"][data-view="home"] .rail{
+  display: none;
+}
+
+html[data-skin="obs"][data-view="home"] .contentWrap{
+  max-width: none;
+  padding-bottom: 0;
+}
+
+html[data-skin="obs"][data-view="home"] .body{
+  padding-top: 0;
+  gap: 0;
+}
+
+html[data-skin="obs"][data-view="home"] .content{
+  padding: 0;
+}
+
+html[data-skin="obs"] .home{
+  position: relative;
+}
+
+html[data-skin="obs"] .starStage{
+  position: relative;
+  height: calc(100vh - var(--top-h));
+  min-height: 660px;
+  /* 舞台裁剪：光晕的左侧溢出改为在 .sunGlow 上做补偿，避免整页横向溢出 */
+  overflow: hidden;
+  /* 图纸网格：直接画在舞台背景上（不要用独立子元素，
+   * 否则 Chrome 会把 fixed 地形画布在该区域隔离成纯色，形成生硬深色矩形）。 */
+  background-image:
+    linear-gradient(rgba(232, 232, 232, .05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(232, 232, 232, .05) 1px, transparent 1px);
+  background-size: 96px 96px;
+  background-position: -1px -1px;
+}
+
+/* ---------------- 左：任务简报 ---------------- */
+html[data-skin="obs"] .missionDock{
+  position: absolute;
+  left: 34px;
+  top: 4.6vh;
+  width: min(400px, 36%);
+  z-index: 6;
+}
+
+html[data-skin="obs"] .dockKicker{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .24em;
+  color: var(--const-yellow);
+  text-transform: uppercase;
+  margin-bottom: 26px;
+}
+
+html[data-skin="obs"] .dockKicker .sq{
+  width: 5px;
+  height: 5px;
+  background: var(--const-orange);
+  box-shadow: 0 0 10px var(--const-orange);
+  flex: 0 0 5px;
+}
+
+html[data-skin="obs"] .missionT{
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: clamp(26px, 2.9vw, 40px);
+  line-height: 1.24;
+  letter-spacing: .07em;
+  color: var(--text-white);
+  margin: 0 0 8px;
+  text-wrap: balance;
+}
+
+html[data-skin="obs"] .missionT em{
+  font-style: normal;
+  font-weight: 500;
+  color: var(--const-orange);
+  letter-spacing: .04em;
+}
+
+html[data-skin="obs"] .missionEn{
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .22em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin: 0 0 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+html[data-skin="obs"] .missionLede{
+  font-size: 14px;
+  line-height: 1.95;
+  letter-spacing: .01em;
+  color: var(--text2);
+  max-width: 36ch;
+  margin: 0 0 20px;
+}
+
+html[data-skin="obs"] .missionLede b{
+  color: var(--text-white);
+  font-weight: 500;
+}
+
+html[data-skin="obs"] .missionBtns{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 0;
+}
+
+html[data-skin="obs"] .missionBtns .btnPrimary, html[data-skin="obs"] .missionBtns .btnGhost{
+  height: 32px;
+  padding: 0 11px;
+  font-size: 10.5px;
+  letter-spacing: .06em;
+  gap: 6px;
+}
+
+/* 首页按钮浮在星图与恒星光晕之上：静止态完全透明，太阳光晕能完整透出
+ * （按钮行恰好横穿光晕上半部，任何底色都会把光晕切成两半）；
+ * 仅在 hover / 键盘聚焦时才浮现底色作为交互反馈。文字靠强阴影保证压在光晕亮部仍清晰。
+ * 注意：不要用 backdrop-filter —— 它会创建 backdrop root，让 fixed 的地形画布在按钮区域被扁平化，
+ * 在首页左侧形成生硬的深色矩形边界（v1.7.5 已移除）。 */
+html[data-skin="obs"] .missionBtns .btnGhost{
+  background: transparent;
+  color: var(--text-white);
+  /* 按钮行横穿太阳光晕亮部，静止态用白字 + 四面黑描边保证可读 */
+  text-shadow: 0 0 2px rgba(0, 0, 0, .95), 0 1px 3px rgba(0, 0, 0, .95), 0 0 12px rgba(0, 0, 0, .8);
+}
+html[data-skin="obs"] .missionBtns .btnPrimary{
+  background: transparent;
+  text-shadow: 0 0 2px rgba(0, 0, 0, .9), 0 1px 3px rgba(0, 0, 0, .95), 0 0 12px rgba(0, 0, 0, .75);
+}
+html[data-skin="obs"] .missionBtns .btnGhost:hover,
+html[data-skin="obs"] .missionBtns .btnGhost:focus-visible{
+  background: rgba(9, 13, 20, .55);
+}
+html[data-skin="obs"] .missionBtns .btnPrimary:hover,
+html[data-skin="obs"] .missionBtns .btnPrimary:focus-visible{
+  background: var(--const-orange);
+  color: #0b0f16;
+}
+
+/* ---------------- 右：系统读数 dock ---------------- */
+html[data-skin="obs"] .systemDock{
+  position: absolute;
+  right: 8px;
+  top: 4.6vh;
+  width: min(330px, 36%);
+  text-align: right;
+  border-right: 3px solid var(--const-orange);
+  padding-right: 20px;
+  z-index: 6;
+}
+
+html[data-skin="obs"] .dockTitle{
+  font-family: var(--font);
+  font-weight: 500;
+  font-size: clamp(17px, 1.8vw, 26px);
+  letter-spacing: .1em;
+  line-height: 1.1;
+  color: var(--text-white);
+  margin: 0;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+html[data-skin="obs"] .dockTitle b{
+  font-weight: 500;
+  color: var(--text-white);
+}
+
+html[data-skin="obs"] .dockSub{
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .03em;
+  color: var(--const-yellow);
+  margin-top: 10px;
+  line-height: 1.8;
+  text-transform: uppercase;
+}
+
+html[data-skin="obs"] .dockSub b{
+  color: var(--text-white);
+  font-weight: 400;
+}
+
+html[data-skin="obs"] .dockRows{
+  margin-top: 24px;
+  padding-right: 20px;
+  border-right: 1px solid rgba(232, 232, 232, .14);
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  line-height: 2.15;
+  letter-spacing: .07em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+html[data-skin="obs"] .dockRows b{
+  color: var(--text-white);
+  font-weight: 400;
+}
+
+html[data-skin="obs"] .dockRows .hl{
+  color: var(--const-orange);
+}
+
+html[data-skin="obs"] .dockRows .sysTerm{
+  margin-top: 10px;
+  min-height: 72px;
+  text-align: left;
+  font-size: 9.5px;
+  line-height: 1.95;
+  text-transform: none;
+  letter-spacing: .04em;
+  color: var(--text-dim);
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+/* ---------------- 太阳系舞台 ---------------- */
+/* .solarGrid 已停用：网格改画在 .starStage 自身背景上（v1.7.7），
+ * 独立子元素会让 Chrome 把 fixed 地形画布在该矩形区域隔离成纯色。 */
+html[data-skin="obs"] .solarGrid{
+  display: none;
+}
+
+html[data-skin="obs"] .solarSystem{
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  transform: scale(var(--sys-scale, 1));
+  transform-origin: var(--cx, 50%) var(--cy, 53%);
+  will-change: transform;
+}
+
+/* 轴线 */
+html[data-skin="obs"] .solarAxis{
+  position: absolute;
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgba(232, 232, 232, .38) 0%,
+    rgba(232, 232, 232, .22) 55%,
+    rgba(232, 232, 232, .06) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+html[data-skin="obs"] .axisTick{
+  position: absolute;
+  width: 1px;
+  height: 4px;
+  background: rgba(232, 232, 232, .38);
+  transform: translate(-50%, -50%);
+}
+
+html[data-skin="obs"] .axisLabel{
+  position: absolute;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .18em;
+  color: var(--text3);
+  text-transform: uppercase;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  opacity: .7;
+}
+
+html[data-skin="obs"] .beltDot{
+  position: absolute;
+  width: 2.5px;
+  height: 2.5px;
+  border-radius: 50%;
+  background: rgba(232, 232, 232, .5);
+  transform: translate(-50%, -50%);
+}
+
+html[data-skin="obs"] .asteroidBelt{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+html[data-skin="obs"] .pnNum{
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+html[data-skin="obs"] .pnLab{
+  color: var(--text-dim);
+}
+
+html[data-skin="obs"] .pnQuiz{
+  color: var(--text-dim);
+}
+
+/* 太阳 */
+html[data-skin="obs"] .sunCore{
+  position: absolute;
+  left: 0;
+  top: 0;
+  /* 太阳中心到舞台左边缘的距离：由 app.js 每次布局时写入；这里给静态兜底值 */
+  --sun-x: 9999px;
+  width: var(--size, 200px);
+  height: var(--size, 200px);
+  margin-top: calc(var(--size, 200px) * -.5);
+  margin-left: calc(var(--size, 200px) * -.5);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 5;
+  will-change: transform;
+}
+
+html[data-skin="obs"] .sunGlow{
+  position: absolute;
+  /* 光晕半径：尽量饱满（太阳直径的 92%），但左缘永不越过舞台边界。
+   * --sun-x 由 app.js 写入（太阳中心到 .starStage 左边的距离）。
+   * v1.7.9 的固定 inset 在大太阳 / 小视口下会让光晕左侧被 overflow:hidden 裁成直线切口。 */
+  --glow-r: min(calc(var(--size, 200px) * .92), calc(var(--sun-x, 9999px) - 10px));
+  inset: calc((var(--size, 200px) - (var(--glow-r) * 2)) / 2);
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(255, 196, 110, .26) 0%,
+    rgba(235, 130, 55, .14) 38%,
+    rgba(220, 100, 45, .055) 66%,
+    rgba(200, 80, 35, 0) 100%);
+  animation: sunPulse 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+html[data-skin="obs"] .sunCorona{
+  position: absolute;
+  inset: -16%;
+  border-radius: 50%;
+  border: 1px dashed rgba(255, 170, 90, .45);
+  animation: spin 120s linear infinite;
+  pointer-events: none;
+  opacity: .75;
+}
+
+html[data-skin="obs"] .sunBody{
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 36% 32%, #fff4cd 0 4%, #ffe6a6 11%, #ffc66a 28%, #f39a43 54%, #cb6a28 80%, #77300f 100%);
+  box-shadow:
+    inset -14px -18px 42px rgba(120, 42, 8, .55),
+    inset 8px 10px 26px rgba(255, 248, 210, .35),
+    0 0 30px rgba(255, 210, 140, .8),
+    0 0 62px rgba(240, 140, 60, .34);
+  /* 远距光晕交给 .sunGlow 的渐变承担（半径受舞台边界约束），
+   * 这里不再叠 90 / 170px 的大阴影，否则左侧会被 overflow:hidden 切出直线。 */
+  overflow: hidden;
+}
+
+html[data-skin="obs"] .sunTexture{
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: .72;
+  mix-blend-mode: overlay;
+  background:
+    radial-gradient(ellipse 9% 6% at 30% 40%, rgba(255, 245, 215, .9), transparent 70%),
+    radial-gradient(ellipse 7% 5% at 54% 26%, rgba(255, 240, 195, .8), transparent 70%),
+    radial-gradient(ellipse 11% 7% at 63% 58%, rgba(150, 58, 14, .7), transparent 70%),
+    radial-gradient(ellipse 6% 4% at 44% 68%, rgba(160, 65, 18, .65), transparent 70%),
+    radial-gradient(ellipse 5% 4% at 70% 38%, rgba(255, 250, 220, .7), transparent 70%),
+    radial-gradient(ellipse 5% 4% at 24% 62%, rgba(140, 52, 12, .6), transparent 70%),
+    radial-gradient(ellipse 4% 3% at 38% 22%, rgba(255, 245, 210, .65), transparent 70%),
+    radial-gradient(ellipse 4% 3% at 58% 74%, rgba(150, 58, 14, .55), transparent 70%),
+    radial-gradient(ellipse 3% 2% at 66% 30%, rgba(255, 236, 190, .6), transparent 70%),
+    radial-gradient(ellipse 8% 5% at 46% 44%, rgba(255, 226, 170, .35), transparent 70%);
+  animation: spin 320s linear infinite;
+}
+
+html[data-skin="obs"] .sunCore:hover .sunBody, html[data-skin="obs"] .sunCore:focus-visible .sunBody{
+  box-shadow:
+    0 0 34px rgba(255, 225, 160, .95),
+    0 0 70px rgba(245, 150, 70, .5);
+}
+
+@keyframes sunPulse{
+  0%, 100% { opacity: .7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+/* 行星容器 */
+html[data-skin="obs"] .planetWrap{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--size, 40px);
+  height: var(--size, 40px);
+  margin-left: calc(var(--size, 40px) * -.5);
+  margin-top: calc(var(--size, 40px) * -.5);
+  will-change: transform;
+  z-index: 3;
+}
+
+html[data-skin="obs"] .planetLink{
+  position: absolute;
+  inset: 0;
+  display: block;
+  text-decoration: none;
+  border-radius: 50%;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 3;
+}
+
+/* 写实球体：类型 class 提供纹理 */
+html[data-skin="obs"] .planet{
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  transition: transform .3s var(--ease), box-shadow .3s var(--ease);
+  z-index: 2;
+  overflow: hidden;
+  box-shadow:
+    inset -5px -6px 14px rgba(0, 0, 0, .6),
+    inset 3px 4px 10px rgba(255, 255, 255, .10),
+    0 0 20px -6px var(--part, transparent),
+    0 0 16px -5px rgba(0, 0, 0, .8);
+}
+
+html[data-skin="obs"] .planetTexture{
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: .95;
+  background-size: 200% 100%;
+  animation: planetSpin 80s linear infinite;
+  pointer-events: none;
+}
+
+html[data-skin="obs"] .planetLink:hover .planet{
+  transform: scale(1.09);
+}
+
+html[data-skin="obs"] .planetWrap.hot .planet{
+  transform: scale(1.09);
+  box-shadow:
+    inset -5px -6px 14px rgba(0, 0, 0, .55),
+    inset 3px 4px 12px rgba(255, 255, 255, .16),
+    0 0 30px -2px rgba(215, 171, 97, .55);
+}
+
+/* —— 世界类型：10 种程序化行星（数据驱动，见 WORLD_MAP） —— */
+html[data-skin="obs"] .pl--rocky{
+  background: radial-gradient(circle at 34% 30%, #d6cfc2 0 7%, #a89f90 26%, #746c5e 60%, #3c362c 100%);
+}
+
+html[data-skin="obs"] .pl--rocky .planetTexture{
+  background-image:
+    radial-gradient(ellipse 11% 11% at 34% 58%, rgba(44, 38, 31, .55), transparent 72%),
+    radial-gradient(ellipse 7% 7% at 62% 32%, rgba(44, 38, 31, .5), transparent 72%),
+    radial-gradient(ellipse 5% 5% at 50% 76%, rgba(44, 38, 31, .42), transparent 72%),
+    radial-gradient(ellipse 6% 6% at 24% 28%, rgba(240, 234, 222, .35), transparent 70%),
+    radial-gradient(ellipse 4% 4% at 72% 66%, rgba(44, 38, 31, .34), transparent 72%);
+  background-size: 100% 100%;
+  animation: none;
+}
+
+html[data-skin="obs"] .pl--ocean{
+  background: radial-gradient(circle at 34% 30%, #d9f0fa 0 6%, #7bb6d8 22%, #2f6f9e 58%, #11395a 100%);
+}
+
+html[data-skin="obs"] .pl--ocean .planetTexture{
+  background-image:
+    radial-gradient(ellipse 28% 17% at 36% 48%, rgba(68, 138, 90, .85), transparent 72%),
+    radial-gradient(ellipse 16% 10% at 60% 62%, rgba(80, 150, 100, .8), transparent 72%),
+    radial-gradient(ellipse 12% 7% at 70% 30%, rgba(92, 160, 110, .7), transparent 72%),
+    radial-gradient(ellipse 42% 9% at 48% 18%, rgba(255, 255, 255, .3), transparent 72%),
+    radial-gradient(ellipse 34% 8% at 44% 80%, rgba(255, 255, 255, .24), transparent 72%),
+    radial-gradient(ellipse 32% 11% at 50% 0%, rgba(255, 255, 255, .55), transparent 66%);
+  background-size: 100% 100%;
+  animation: none;
+  opacity: .92;
+}
+
+html[data-skin="obs"] .pl--desert{
+  background: radial-gradient(circle at 34% 30%, #f0d39a 0 8%, #d3a965 30%, #a4743c 64%, #5a3a1c 100%);
+}
+
+html[data-skin="obs"] .pl--desert .planetTexture{
+  background-image:
+    radial-gradient(ellipse 32% 13% at 42% 40%, rgba(122, 76, 36, .48), transparent 74%),
+    radial-gradient(ellipse 18% 8% at 66% 60%, rgba(122, 76, 36, .4), transparent 74%),
+    radial-gradient(ellipse 24% 8% at 33% 70%, rgba(255, 238, 204, .3), transparent 74%),
+    radial-gradient(ellipse 28% 10% at 58% 23%, rgba(255, 246, 218, .36), transparent 74%),
+    radial-gradient(ellipse 15% 6% at 48% 88%, rgba(96, 60, 26, .38), transparent 72%);
+  background-size: 100% 100%;
+  animation: none;
+}
+
+html[data-skin="obs"] .pl--ice{
+  background: radial-gradient(circle at 34% 30%, #eafbff 0 8%, #b9e4ec 26%, #7fb7c6 58%, #356a7c 100%);
+}
+
+html[data-skin="obs"] .pl--ice .planetTexture{
+  background-image:
+    radial-gradient(ellipse 48% 15% at 50% 2%, rgba(255, 255, 255, .6), transparent 68%),
+    radial-gradient(ellipse 42% 13% at 46% 97%, rgba(255, 255, 255, .42), transparent 68%),
+    radial-gradient(ellipse 22% 9% at 36% 44%, rgba(255, 255, 255, .2), transparent 72%),
+    radial-gradient(ellipse 15% 6% at 64% 58%, rgba(116, 188, 214, .45), transparent 72%),
+    radial-gradient(ellipse 11% 5% at 54% 30%, rgba(255, 255, 255, .26), transparent 72%);
+  background-size: 100% 100%;
+  animation: none;
+}
+
+html[data-skin="obs"] .pl--aurora{
+  background: radial-gradient(circle at 34% 30%, #d8f6f2 0 6%, #7fc6cc 24%, #4c7fa8 58%, #263a66 100%);
+}
+
+html[data-skin="obs"] .pl--aurora .planetTexture{
+  background-image:
+    radial-gradient(ellipse 36% 11% at 40% 26%, rgba(150, 255, 220, .5), transparent 72%),
+    radial-gradient(ellipse 28% 9% at 62% 40%, rgba(118, 210, 255, .42), transparent 72%),
+    radial-gradient(ellipse 24% 8% at 46% 56%, rgba(182, 152, 255, .32), transparent 72%),
+    radial-gradient(ellipse 32% 10% at 58% 74%, rgba(120, 240, 210, .28), transparent 72%),
+    radial-gradient(ellipse 42% 13% at 50% 2%, rgba(255, 255, 255, .5), transparent 66%);
+  background-size: 100% 100%;
+  animation: none;
+}
+
+html[data-skin="obs"] .pl--gas{
+  background-color: #c9a06e;
+  background-image:
+    radial-gradient(circle at 34% 30%, rgba(255, 255, 255, .3) 0 6%, transparent 34%),
+    radial-gradient(ellipse 60% 22% at 36% 66%, rgba(120, 80, 45, .5), transparent 66%);
+}
+
+html[data-skin="obs"] .pl--gas .planetTexture{
+  background-image:
+    radial-gradient(ellipse 110% 9% at 48% 20%, rgba(242, 218, 182, .55), transparent 72%),
+    radial-gradient(ellipse 110% 8% at 52% 37%, rgba(168, 122, 78, .58), transparent 72%),
+    radial-gradient(ellipse 110% 10% at 46% 54%, rgba(240, 212, 174, .5), transparent 72%),
+    radial-gradient(ellipse 110% 8% at 54% 70%, rgba(152, 106, 66, .52), transparent 72%),
+    radial-gradient(ellipse 110% 6% at 50% 85%, rgba(228, 198, 156, .4), transparent 72%),
+    radial-gradient(ellipse 42% 13% at 64% 44%, rgba(196, 86, 52, .55), transparent 70%);
+  background-size: 100% 100%;
+  animation: none;
+  opacity: .9;
+}
+
+html[data-skin="obs"] .pl--ringed{
+  background-color: #d6bc86;
+  background-image:
+    radial-gradient(circle at 34% 30%, rgba(255, 255, 255, .28) 0 6%, transparent 32%),
+    radial-gradient(ellipse 55% 20% at 38% 64%, rgba(140, 104, 60, .4), transparent 68%);
+}
+
+html[data-skin="obs"] .pl--ringed .planetTexture{
+  background-image:
+    radial-gradient(ellipse 110% 8% at 50% 24%, rgba(242, 224, 184, .42), transparent 72%),
+    radial-gradient(ellipse 110% 7% at 48% 44%, rgba(180, 145, 96, .45), transparent 72%),
+    radial-gradient(ellipse 110% 9% at 52% 62%, rgba(240, 220, 178, .36), transparent 72%),
+    radial-gradient(ellipse 110% 7% at 46% 78%, rgba(162, 128, 82, .38), transparent 72%),
+    radial-gradient(ellipse 64% 13% at 50% 114%, rgba(120, 90, 50, .45), transparent 70%);
+  background-size: 100% 100%;
+  animation: none;
+  opacity: .88;
+}
+
+html[data-skin="obs"] .pl--storm{
+  background: radial-gradient(circle at 34% 30%, #cfe2f7 0 6%, #7f9fd8 24%, #3a5fa8 58%, #16294f 100%);
+}
+
+html[data-skin="obs"] .pl--storm .planetTexture{
+  background-image:
+    radial-gradient(ellipse 28% 17% at 58% 44%, rgba(14, 30, 70, .8), transparent 68%),
+    radial-gradient(ellipse 44% 11% at 48% 28%, rgba(220, 236, 255, .22), transparent 74%),
+    radial-gradient(ellipse 38% 9% at 54% 58%, rgba(226, 240, 255, .18), transparent 74%),
+    radial-gradient(ellipse 32% 8% at 44% 73%, rgba(20, 40, 90, .32), transparent 74%),
+    radial-gradient(ellipse 40% 11% at 50% 8%, rgba(232, 244, 255, .3), transparent 72%);
+  background-size: 100% 100%;
+  animation: none;
+  opacity: .92;
+}
+
+html[data-skin="obs"] .pl--lava{
+  background: radial-gradient(circle at 34% 30%, #d88a5a 0 5%, #a4442a 26%, #6b2417 58%, #2a0f0a 100%);
+}
+
+html[data-skin="obs"] .pl--lava .planetTexture{
+  background-image:
+    radial-gradient(ellipse 7% 7% at 36% 54%, rgba(255, 192, 92, .85), transparent 70%),
+    radial-gradient(ellipse 5% 5% at 58% 38%, rgba(255, 172, 72, .75), transparent 70%),
+    radial-gradient(ellipse 6% 6% at 48% 70%, rgba(255, 152, 62, .7), transparent 70%),
+    radial-gradient(ellipse 4% 4% at 66% 58%, rgba(255, 208, 118, .58), transparent 70%),
+    radial-gradient(ellipse 4% 4% at 30% 34%, rgba(255, 162, 72, .55), transparent 70%),
+    radial-gradient(ellipse 64% 13% at 50% 108%, rgba(255, 120, 50, .25), transparent 70%);
+  background-size: 100% 100%;
+  animation: none;
+  opacity: .92;
+}
+
+html[data-skin="obs"] .pl--icegiant{
+  background: radial-gradient(circle at 34% 30%, #d9f4f6 0 8%, #9fd6dd 26%, #5f9dae 60%, #2a5a6a 100%);
+}
+
+html[data-skin="obs"] .pl--icegiant .planetTexture{
+  background-image:
+    radial-gradient(ellipse 82% 9% at 50% 30%, rgba(255, 255, 255, .14), transparent 74%),
+    radial-gradient(ellipse 72% 8% at 46% 52%, rgba(200, 240, 246, .16), transparent 74%),
+    radial-gradient(ellipse 32% 10% at 40% 66%, rgba(255, 255, 255, .1), transparent 74%),
+    radial-gradient(ellipse 38% 11% at 52% 4%, rgba(255, 255, 255, .4), transparent 68%);
+  background-size: 100% 100%;
+  animation: none;
+  opacity: .9;
+}
+
+/* —— Part 星区：分区标签 / 背景辉光 / 虚线分隔 —— */
+html[data-skin="obs"] .partLayer{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+html[data-skin="obs"] .partField{
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(ellipse at 50% 52%, var(--part-soft, rgba(215, 171, 97, .06)) 0%, transparent 72%);
+}
+
+html[data-skin="obs"] .partTag{
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 4;
+}
+
+html[data-skin="obs"] .partTag b{
+  color: var(--part, var(--const-yellow));
+  font-weight: 400;
+}
+
+html[data-skin="obs"] .partTag i{
+  font-style: normal;
+  color: var(--text3);
+  letter-spacing: .12em;
+}
+
+html[data-skin="obs"] .partDivider{
+  position: absolute;
+  width: 1px;
+  background: repeating-linear-gradient(180deg,
+    rgba(232, 232, 232, .16) 0 4px,
+    transparent 4px 10px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+html[data-skin="obs"] .olHint{
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .14em;
+  color: var(--text3);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* —— 行星环 —— */
+html[data-skin="obs"] .ringBack, html[data-skin="obs"] .ringFront{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--size, 40px) * 2.15);
+  height: calc(var(--size, 40px) * .62);
+  margin-top: calc(var(--size, 40px) * -.31);
+  margin-left: calc(var(--size, 40px) * -1.075);
+  border-radius: 50%;
+  border: 1px solid rgba(214, 184, 118, .5);
+  transform: rotate(-18deg);
+  pointer-events: none;
+}
+
+html[data-skin="obs"] .ringBack{
+  z-index: 1;
+  opacity: .55;
+}
+
+html[data-skin="obs"] .ringFront{
+  z-index: 4;
+  opacity: .9;
+  clip-path: polygon(0 50%, 100% 50%, 100% 100%, 0 100%);
+}
+
+html[data-skin="obs"] .planetWrap[data-type="ringed"] .ringBack, html[data-skin="obs"] .planetWrap[data-type="ringed"] .ringFront{
+  width: calc(var(--size, 40px) * 2.45);
+  height: calc(var(--size, 40px) * .68);
+  margin-top: calc(var(--size, 40px) * -.34);
+  margin-left: calc(var(--size, 40px) * -1.225);
+  border-color: rgba(226, 206, 158, .62);
+  border-width: 2px;
+  box-shadow: 0 0 12px -6px rgba(226, 206, 158, .6);
+}
+
+html[data-skin="obs"] .planetWrap[data-type="ringed"] .ringBack::after{
+  content: "";
+  position: absolute;
+  inset: 26% 7%;
+  border-radius: 50%;
+  border: 1px solid rgba(226, 206, 158, .32);
+}
+
+html[data-skin="obs"] .planetWrap[data-type="gas"] .ringBack, html[data-skin="obs"] .planetWrap[data-type="gas"] .ringFront{
+  border-color: rgba(196, 160, 120, .34);
+}
+
+html[data-skin="obs"] .planetWrap[data-type="icegiant"] .ringBack, html[data-skin="obs"] .planetWrap[data-type="icegiant"] .ringFront{
+  width: calc(var(--size, 40px) * 1.95);
+  height: calc(var(--size, 40px) * .5);
+  margin-top: calc(var(--size, 40px) * -.25);
+  margin-left: calc(var(--size, 40px) * -.975);
+  border-color: rgba(160, 210, 220, .38);
+}
+
+html[data-skin="obs"] .planetWrap[data-type="gas"] .planetTexture{
+  animation-duration: 60s;
+}
+
+@keyframes planetSpin{
+  from { background-position: 0 0; }
+  to { background-position: -200% 0; }
+}
+
+@keyframes spin{
+  from { transform: rotate(0); }
+  to { transform: rotate(360deg); }
+}
+
+/* 行星悬停铭牌 */
+html[data-skin="obs"] .planetLabel{
+  position: absolute;
+  bottom: calc(100% + 16px);
+  left: 50%;
+  transform: translate(-50%, 6px);
+  font-family: var(--font);
+  font-weight: 500;
+  font-size: 12.5px;
+  letter-spacing: .08em;
+  color: var(--text-white);
+  white-space: nowrap;
+  text-align: center;
+  text-shadow: 0 0 12px rgba(9, 13, 20, .95);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s var(--ease), transform .25s var(--ease);
+  z-index: 10;
+}
+
+html[data-skin="obs"] .planetWrap.hot .planetLabel{
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+html[data-skin="obs"] .planetLabel .plEn{
+  display: block;
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 400;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--const-yellow);
+}
+
+/* 行星下方入口节点树 */
+html[data-skin="obs"] .pNodes{
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+  padding-top: 22px;
+  z-index: 5;
+}
+
+html[data-skin="obs"] .pNodes::before{
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 7px;
+  left: 50%;
+  width: 1px;
+  background: linear-gradient(180deg,
+    rgba(232, 232, 232, .42),
+    rgba(232, 232, 232, .14) 70%,
+    rgba(232, 232, 232, .05));
+}
+
+html[data-skin="obs"] .pNode{
+  position: relative;
+  width: 15px;
+  height: 15px;
+  border: 1px solid rgba(232, 232, 232, .42);
+  border-radius: 50%;
+  background: rgba(9, 13, 20, .92);
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0;
+  pointer-events: auto;
+  transition: border-color .25s var(--ease), color .25s var(--ease), transform .25s var(--ease);
+  z-index: 5;
+}
+
+html[data-skin="obs"] .pNode svg{
+  width: 9px;
+  height: 9px;
+  stroke-width: 2;
+}
+
+html[data-skin="obs"] .pNode:hover, html[data-skin="obs"] .pNode:focus-visible{
+  border-color: var(--const-orange);
+  color: var(--const-orange);
+  transform: scale(1.22);
+  outline: none;
+}
+
+html[data-skin="obs"] .planetWrap.hot .pNode{
+  border-color: rgba(232, 232, 232, .62);
+  color: var(--text2);
+}
+
+html[data-skin="obs"] .pnMain{
+  border-color: var(--part, rgba(215, 171, 97, .55));
+  color: var(--part, var(--const-yellow));
+  font-size: 8px;
+}
+
+html[data-skin="obs"] .pNode .pnTip{
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .12em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s var(--ease);
+}
+
+html[data-skin="obs"] .pNode:hover .pnTip, html[data-skin="obs"] .pNode:focus-visible .pnTip{
+  opacity: 1;
+  color: var(--const-yellow);
+}
+
+/* ---------------- 图例 / 底部控件 / 提示 ---------------- */
+html[data-skin="obs"] .orbitLegend{
+  position: absolute;
+  left: 34px;
+  bottom: 26px;
+  z-index: 6;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  line-height: 2.1;
+  pointer-events: none;
+}
+
+html[data-skin="obs"] .olHead{
+  font-size: 8px;
+  letter-spacing: .22em;
+  color: var(--const-yellow);
+  opacity: .85;
+  margin-bottom: 5px;
+}
+
+html[data-skin="obs"] .olRow{
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+}
+
+html[data-skin="obs"] .olDot{
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+}
+
+html[data-skin="obs"] .olCode{
+  color: var(--text2);
+  min-width: 62px;
+}
+
+html[data-skin="obs"] .olPart{
+  color: var(--text-dim);
+  min-width: 52px;
+}
+
+html[data-skin="obs"] .olName{
+  color: var(--text3);
+  letter-spacing: .06em;
+}
+
+html[data-skin="obs"] .bottomHud{
+  position: absolute;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;
+  gap: 30px;
+  z-index: 6;
+}
+
+html[data-skin="obs"] .fovWrap{
+  position: static;
+  width: 250px;
+  pointer-events: auto;
+}
+
+html[data-skin="obs"] .fovLabel{
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .2em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+html[data-skin="obs"] .fovVal{
+  color: var(--const-orange);
+}
+
+html[data-skin="obs"] .fovSlider{
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 14px;
+  margin: 7px 0 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  outline: none;
+}
+
+html[data-skin="obs"] .fovSlider::-webkit-slider-runnable-track{
+  height: 1px;
+  background: rgba(232, 232, 232, .28);
+}
+
+html[data-skin="obs"] .fovSlider::-webkit-slider-thumb{
+  -webkit-appearance: none;
+  width: 9px;
+  height: 9px;
+  margin-top: -4px;
+  border: 0;
+  border-radius: 0;
+  background: var(--const-orange);
+  box-shadow: 0 0 10px rgba(224, 98, 54, .55);
+}
+
+html[data-skin="obs"] .fovSlider::-moz-range-track{
+  height: 1px;
+  background: rgba(232, 232, 232, .28);
+}
+
+html[data-skin="obs"] .fovSlider::-moz-range-thumb{
+  width: 9px;
+  height: 9px;
+  border: 0;
+  border-radius: 0;
+  background: var(--const-orange);
+}
+
+html[data-skin="obs"] .fovSlider:focus-visible{
+  outline: 1px solid var(--const-yellow);
+  outline-offset: 3px;
+}
+
+html[data-skin="obs"] .fovTicks{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0 2px;
+  margin-top: 4px;
+  pointer-events: none;
+}
+
+html[data-skin="obs"] .fovTicks i{
+  width: 1px;
+  height: 4px;
+  background: rgba(232, 232, 232, .26);
+}
+
+html[data-skin="obs"] .fovTicks i:nth-child(5n + 1){
+  height: 7px;
+  background: rgba(232, 232, 232, .46);
+}
+
+html[data-skin="obs"] .stageHint{
+  position: absolute;
+  right: 8px;
+  bottom: 18px;
+  z-index: 6;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .14em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  text-align: right;
+  line-height: 1.9;
+  opacity: .8;
+}
+
+html[data-skin="obs"] .moduleIndex{
+  display: none;
+}
+
+/* ---------------------------------------------------------------- 05 章节阅读 */
+html[data-skin="obs"] .chapter{
+  position: relative;
+}
+
+html[data-skin="obs"] .chHead{
+  position: relative;
+  margin: 0 0 40px;
+  padding: 4px 0 30px;
+  border-bottom: 1px solid var(--line);
+}
+
+html[data-skin="obs"] .chTop{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+html[data-skin="obs"] .chCrumbs{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .16em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 0;
+}
+
+html[data-skin="obs"] .chCrumbs a{
+  color: var(--text-dim);
+  border: 0;
+}
+
+html[data-skin="obs"] .chCrumbs a:hover{
+  color: var(--const-orange);
+  border: 0;
+}
+
+html[data-skin="obs"] .chCrumbs span{
+  color: var(--text-dim);
+}
+
+html[data-skin="obs"] .chSeq{
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .18em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+html[data-skin="obs"] .chKicker{
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 26px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .22em;
+  color: var(--const-orange);
+  text-transform: uppercase;
+}
+
+html[data-skin="obs"] .chKicker::before{
+  content: "";
+  width: 10px;
+  height: 1px;
+  background: var(--const-orange);
+}
+
+html[data-skin="obs"] .chTitle{
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1.22;
+  letter-spacing: .05em;
+  color: var(--text-white);
+  margin: 12px 0 10px;
+  text-wrap: balance;
+}
+
+html[data-skin="obs"] .chEn{
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .22em;
+  color: var(--const-yellow);
+  text-transform: uppercase;
+  margin-bottom: 26px;
+}
+
+html[data-skin="obs"] .chMeta{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0;
+  margin: 0 0 4px;
+}
+
+html[data-skin="obs"] .metaItem{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 22px 0 0;
+  margin-right: 22px;
+  border-right: 1px solid var(--line);
+}
+
+html[data-skin="obs"] .metaItem:last-child{
+  border-right: 0;
+  margin-right: 0;
+}
+
+html[data-skin="obs"] .metaK{
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .2em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+html[data-skin="obs"] .metaV{
+  font-family: var(--font);
+  font-size: 15.5px;
+  font-weight: 400;
+  letter-spacing: .1em;
+  color: var(--text-white);
+  white-space: nowrap;
+}
+
+html[data-skin="obs"] .metaV i{
+  font-style: normal;
+  color: var(--const-orange);
+}
+
+/* 学习目标：任务简报 */
+html[data-skin="obs"] .goalsBox{
+  margin-top: 24px;
+  padding: 16px 0 6px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-left: 0;
+  border-right: 0;
+  background: none;
+}
+
+html[data-skin="obs"] .goalsBox h4{
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 400;
+  letter-spacing: .2em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin: 0 0 12px;
+}
+
+html[data-skin="obs"] .goalsBox ul{
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+html[data-skin="obs"] .goalsBox li{
+  position: relative;
+  padding-left: 20px;
+  margin-bottom: 9px;
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--text2);
+}
+
+html[data-skin="obs"] .goalsBox li::before{
+  content: "▸";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--const-orange);
+  font-size: 11.5px;
+}
+
+/* 章节大水印编号 */
+html[data-skin="obs"] .chHead > *{
+  position: relative;
+  z-index: 1;
+}
+
+html[data-skin="obs"] .chWatermark{
+  position: absolute;
+  right: -14px;
+  top: -54px;
+  z-index: 0;
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: clamp(96px, 12vw, 156px);
+  line-height: 1;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(59, 78, 107, .42);
+  opacity: .34;
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: .02em;
+}
+
+/* 正文标题 */
+html[data-skin="obs"] .blockH{
+  position: relative;
+  font-family: var(--font);
+  font-weight: 400;
+  color: var(--text-white);
+  letter-spacing: .04em;
+  margin: 52px 0 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  counter-increment: secH;
+}
+
+html[data-skin="obs"] .chapter{
+  counter-reset: secH;
+}
+
+html[data-skin="obs"] h2.blockH{
+  display: block;
+  font-size: 22px;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+html[data-skin="obs"] h2.blockH::before{
+  content: "§ " counter(secH, decimal-leading-zero);
+  position: absolute;
+  top: -8px;
+  bottom: auto;
+  left: 0;
+  width: max-content;
+  height: 14px;
+  line-height: 14px;
+  white-space: nowrap;
+  padding: 0 9px 0 0;
+  background: var(--bg-navy);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  color: var(--const-orange);
+  font-weight: 400;
+}
+
+html[data-skin="obs"] h3.blockH{
+  font-size: 19px;
+  margin-top: 40px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+html[data-skin="obs"] h4.blockH{
+  font-size: 15.5px;
+  margin-top: 30px;
+  padding-top: 0;
+  border-top: 0;
+  color: var(--const-yellow);
+  letter-spacing: .08em;
+}
+
+html[data-skin="obs"] .blockP{
+  font-size: 15.5px;
+  line-height: 1.98;
+  letter-spacing: .012em;
+  color: #cbd5e1;
+  margin: 0 0 22px;
+}
+
+html[data-skin="obs"] .blockP b, html[data-skin="obs"] .blockP strong{
+  color: var(--text-white);
+  font-weight: 500;
+}
+
+html[data-skin="obs"] .blockP.lead{
+  font-size: 17px;
+  line-height: 1.9;
+  color: var(--text-white);
+  padding-left: 18px;
+  border-left: 1px solid var(--line2);
+  margin-bottom: 30px;
+}
+
+/* 提示卡：细线 + 左侧色条，不填大色块 */
+html[data-skin="obs"] .callout{
+  box-shadow: none;
+  position: relative;
+  margin: 28px 0;
+  padding: 16px 20px 6px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--line2);
+  background: rgba(9, 13, 20, .34);
+}
+
+html[data-skin="obs"] .callout::before{
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  width: 1px;
+  height: 10px;
+  background: var(--const-orange);
+}
+
+html[data-skin="obs"] .callout .ct{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+
+html[data-skin="obs"] .callout .ct svg{
+  width: 12px;
+  height: 12px;
+}
+
+html[data-skin="obs"] .callout .cb{
+  font-size: 14px;
+  line-height: 1.95;
+  color: var(--text2);
+}
+
+html[data-skin="obs"] .callout .cb p{
+  margin: 0 0 12px;
+}
+
+html[data-skin="obs"] .callout .cb > *:last-child{
+  margin-bottom: 8px;
+}
+
+html[data-skin="obs"] .callout.why{ border-left-color: var(--const-yellow); }
+html[data-skin="obs"] .callout.why .ct{ color: var(--const-yellow); }
+html[data-skin="obs"] .callout.tip{ border-left-color: var(--ok); }
+html[data-skin="obs"] .callout.tip .ct{ color: var(--ok); }
+html[data-skin="obs"] .callout.warn{ border-left-color: var(--const-red); }
+html[data-skin="obs"] .callout.warn .ct{ color: #d9818f; }
+html[data-skin="obs"] .callout.exam{ border-left-color: var(--const-orange); }
+html[data-skin="obs"] .callout.exam .ct{ color: var(--const-orange); }
+html[data-skin="obs"] .callout.ai{ border-left-color: #7f9fbf; }
+html[data-skin="obs"] .callout.ai .ct{ color: var(--accent2); }
+html[data-skin="obs"] .callout.note{ border-left-color: var(--line2); }
+html[data-skin="obs"] .callout.quote{ border-left-color: var(--const-blue); }
+html[data-skin="obs"] .callout.quote .cb{ font-style: italic; color: var(--text-dim); }
+
+/* 表格 */
+html[data-skin="obs"] .tableWrap{
+  box-shadow: none;
+  margin: 26px 0;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  box-shadow: none;
+  overflow-x: auto;
+  background: rgba(9, 13, 20, .28);
+}
+
+html[data-skin="obs"] .tableWrap table{
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+html[data-skin="obs"] .tableWrap th{
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--const-yellow);
+  text-align: left;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--line2);
+  background: rgba(9, 13, 20, .5);
+  font-weight: 400;
+}
+
+html[data-skin="obs"] .tableWrap td{
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(59, 78, 107, .3);
+  color: var(--text2);
+  line-height: 1.8;
+  vertical-align: top;
+}
+
+html[data-skin="obs"] .tableWrap tr:last-child td{
+  border-bottom: 0;
+}
+
+html[data-skin="obs"] .tableWrap tbody tr:hover td{
+  background: rgba(232, 232, 232, .025);
+}
+
+html[data-skin="obs"] .tableWrap code{
+  font-size: .9em;
+}
+
+html[data-skin="obs"] .tableWrap .cap{
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .1em;
+  color: var(--text-dim);
+  padding: 8px 14px 10px;
+  border-top: 1px solid rgba(59, 78, 107, .3);
+}
+
+/* 术语卡 */
+html[data-skin="obs"] .termsGrid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 26px 0;
+}
+
+html[data-skin="obs"] .termCard{
+  box-shadow: none;
+  border: 1px solid var(--line);
+  background: rgba(9, 13, 20, .32);
+  padding: 14px 16px;
+  position: relative;
+}
+
+html[data-skin="obs"] .termCard::before{
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  width: 16px;
+  height: 1px;
+  background: var(--const-orange);
+}
+
+html[data-skin="obs"] .termCard .te{
+  display: block;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: .06em;
+  color: var(--text-white);
+  margin-bottom: 3px;
+}
+
+html[data-skin="obs"] .termCard .tz{
+  display: block;
+  font-size: 11.5px;
+  letter-spacing: .06em;
+  color: var(--const-yellow);
+  margin-bottom: 8px;
+}
+
+html[data-skin="obs"] .termCard .td{
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: var(--text2);
+}
+
+/* 步骤 */
+html[data-skin="obs"] .steps{
+  margin: 26px 0;
+  padding-left: 26px;
+  /* 序号旁的时间线已移除 */
+}
+
+html[data-skin="obs"] .step{
+  position: relative;
+  padding-bottom: 22px;
+  border-left: 0; /* 覆盖 app.css 里 .step 的 2px 竖线 */
+}
+
+html[data-skin="obs"] .step::before{
+  content: attr(data-n);
+  position: absolute;
+  left: -35px;
+  top: 4px; /* 与标题首行垂直居中（行高 24.5px，圈 17px） */
+  width: 17px;
+  height: 17px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line2);
+  background: var(--bg-navy);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  color: var(--const-orange);
+}
+
+html[data-skin="obs"] .step .st{
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: .04em;
+  color: var(--text-white);
+  margin-bottom: 6px;
+}
+
+html[data-skin="obs"] .step .sd{
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--text2);
+}
+
+/* 对比 */
+html[data-skin="obs"] .compare{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin: 26px 0;
+}
+
+html[data-skin="obs"] .cmpCard{
+  background: rgba(10, 15, 24, .86);
+  padding: 16px 18px;
+}
+
+html[data-skin="obs"] .cmpCard .cT{
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  color: var(--text-dim);
+}
+
+html[data-skin="obs"] .cmpCard.left .cT{
+  color: #d9818f;
+}
+
+html[data-skin="obs"] .cmpCard.right .cT{
+  color: var(--ok);
+}
+
+html[data-skin="obs"] .cmpCard > div:not(.cT){
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--text2);
+}
+
+html[data-skin="obs"] .cmpCard pre{
+  margin: 10px 0 0;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: var(--codeText);
+  white-space: pre-wrap;
+}
+
+/* 自查清单 */
+html[data-skin="obs"] .checklist{
+  margin: 28px 0;
+  border: 1px solid var(--line);
+  padding: 18px 20px 10px;
+  background: rgba(9, 13, 20, .3);
+}
+
+html[data-skin="obs"] .checklist h4{
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 400;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin: 0 0 14px;
+}
+
+html[data-skin="obs"] .checkItem{
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(59, 78, 107, .22);
+  transition: color var(--dur);
+}
+
+html[data-skin="obs"] .checkItem:last-of-type{
+  border-bottom: 0;
+}
+
+html[data-skin="obs"] .checkItem .box{
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
+  margin-top: 2px;
+  border: 1px solid var(--line2);
+  display: grid;
+  place-items: center;
+  color: transparent;
+  transition: all var(--dur);
+}
+
+html[data-skin="obs"] .checkItem .box svg{
+  width: 10px;
+  height: 10px;
+}
+
+html[data-skin="obs"] .checkItem .ctext{
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--text2);
+}
+
+html[data-skin="obs"] .checkItem:hover .box{
+  border-color: var(--const-orange);
+}
+
+html[data-skin="obs"] .checkItem.on .box{
+  border-color: var(--const-orange);
+  background: var(--const-orange);
+  color: #0b0f16;
+}
+
+html[data-skin="obs"] .checkItem.on .ctext{
+  color: var(--text-dim);
+  text-decoration: line-through;
+  text-decoration-color: rgba(109, 125, 140, .5);
+}
+
+html[data-skin="obs"] .checkBar{
+  height: 1px;
+  background: var(--line);
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+html[data-skin="obs"] .checkBar i{
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--const-orange);
+  transition: width .35s var(--ease);
+}
+
+/* 章末要点 */
+html[data-skin="obs"] .keypoint{
+  box-shadow: none;
+  margin: 34px 0;
+  border: 1px solid var(--line);
+  border-top: 2px solid var(--line2);
+  padding: 18px 20px 12px;
+  background: rgba(9, 13, 20, .36);
+  position: relative;
+}
+
+html[data-skin="obs"] .keypoint h4{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 400;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--const-yellow);
+  margin: 0 0 14px;
+}
+
+html[data-skin="obs"] .keypoint h4 svg{
+  width: 12px;
+  height: 12px;
+}
+
+html[data-skin="obs"] .kpItem{
+  display: flex;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(59, 78, 107, .25);
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--text2);
+}
+
+html[data-skin="obs"] .kpItem:last-child{
+  border-bottom: 0;
+}
+
+html[data-skin="obs"] .kpn{
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--const-orange);
+  padding-top: 3px;
+  min-width: 14px;
+}
+
+html[data-skin="obs"] .kpItem b{
+  color: var(--text-white);
+  font-weight: 500;
+}
+
+/* SVG 图 */
+html[data-skin="obs"] .flowWrap svg rect,
+html[data-skin="obs"] .svgFig svg rect{
+  rx: 0;
+}
+
+html[data-skin="obs"] .flowWrap text,
+html[data-skin="obs"] .svgFig text{
+  font-family: var(--font);
+}
+
+html[data-skin="obs"] .svgFig{
+  margin: 28px 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  background: rgba(9, 13, 20, .3);
+  text-align: center;
+  overflow-x: auto;
+}
+
+html[data-skin="obs"] .svgFig svg{
+  max-width: 100%;
+  height: auto;
+}
+
+html[data-skin="obs"] .svgFig .figCap{
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .1em;
+  color: var(--text-dim);
+  margin-top: 12px;
+  text-align: center;
+}
+
+/* 网格 / 标签页 */
+html[data-skin="obs"] .gridBlock{
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin: 26px 0;
+}
+
+html[data-skin="obs"] .gridBlock.c2{ grid-template-columns: 1fr 1fr; }
+html[data-skin="obs"] .gridBlock.c3{ grid-template-columns: repeat(3, 1fr); }
+
+html[data-skin="obs"] .gridBlock > div{
+  background: rgba(10, 15, 24, .82);
+  padding: 14px 16px;
+}
+
+html[data-skin="obs"] .tabsBlock{
+  margin: 26px 0;
+  border: 1px solid var(--line);
+  background: rgba(9, 13, 20, .3);
+}
+
+html[data-skin="obs"] .tabBar{
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 0 8px;
+  overflow-x: auto;
+}
+
+html[data-skin="obs"] .tabBtn{
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  padding: 11px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+html[data-skin="obs"] .tabBtn:hover{
+  color: var(--text-white);
+}
+
+html[data-skin="obs"] .tabBtn.active{
+  color: var(--const-yellow);
+  border-bottom-color: var(--const-orange);
+}
+
+html[data-skin="obs"] .tabPane{
+  padding: 4px 14px 14px;
+}
+
+html[data-skin="obs"] .tabPane.hidden{
+  display: none;
+}
+
+/* 章节底部：完成 / 上下章 */
+html[data-skin="obs"] .doneBar{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 46px 0 0;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+html[data-skin="obs"] .doneBar .dt{
+  flex: 1;
+  min-width: 240px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .08em;
+  color: var(--text-dim);
+  line-height: 1.9;
+}
+
+html[data-skin="obs"] .doneBar .dt b{
+  font-weight: 400;
+}
+
+html[data-skin="obs"] .qzBtn{
+  border: 1px solid var(--const-orange);
+  color: var(--text-white);
+  background: rgba(224, 98, 54, .08);
+  height: 32px;
+  padding: 0 14px;
+  font-size: 9.5px;
+}
+
+html[data-skin="obs"] .qzBtn:hover{
+  background: var(--const-orange);
+  color: #0b0f16;
+}
+
+html[data-skin="obs"] .qzBtn.ghost{
+  border-color: var(--line2);
+  color: var(--text2);
+  background: none;
+}
+
+html[data-skin="obs"] .qzBtn.ghost:hover{
+  border-color: var(--const-yellow);
+  color: var(--const-yellow);
+  background: none;
+}
+
+html[data-skin="obs"] .chNav{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  margin: 26px 0 0;
+}
+
+html[data-skin="obs"] .chNavA{
+  display: block;
+  background: rgba(10, 15, 24, .82);
+  padding: 16px 18px;
+  text-decoration: none;
+  border: 0;
+  transition: background var(--dur);
+}
+
+html[data-skin="obs"] .chNavA:hover{
+  background: rgba(232, 232, 232, .035);
+  text-decoration: none;
+  border: 0;
+}
+
+html[data-skin="obs"] .chNavA .d{
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+html[data-skin="obs"] .chNavA .t{
+  font-size: 14px;
+  letter-spacing: .03em;
+  color: var(--text-white);
+}
+
+html[data-skin="obs"] .chNavA.next{
+  text-align: right;
+}
+
+html[data-skin="obs"] .chNavA.disabled{
+  pointer-events: none;
+  opacity: .42;
+}
+
+/* 空状态 / 加载 */
+html[data-skin="obs"] .emptyState{
+  text-align: center;
+  padding: 90px 20px;
+  border: 1px solid var(--line);
+  font-family: var(--mono);
+  letter-spacing: .08em;
+}
+
+html[data-skin="obs"] .emptyState .ei{
+  font-size: 26px;
+  color: var(--text-dim);
+  margin-bottom: 14px;
+}
+
+html[data-skin="obs"] .emptyState h3{
+  font-family: var(--font);
+  font-weight: 500;
+  letter-spacing: .08em;
+}
+
+html[data-skin="obs"] .emptyState p{
+  color: var(--text-dim);
+  font-size: 11.5px;
+}
+
+html[data-skin="obs"] .bootSplash{
+  display: grid;
+  place-items: center;
+  min-height: 56vh;
+}
+
+html[data-skin="obs"] .bootIn{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .14em;
+}
+
+html[data-skin="obs"] .bootMark{
+  font-size: 22px;
+  font-weight: 300;
+  background: none;
+  -webkit-background-clip: initial;
+  background-clip: initial;
+  color: var(--const-orange);
+  animation: breathe 1.8s ease-in-out infinite;
+}
+
+html[data-skin="obs"] .bootTxt{
+  font-size: 10.5px;
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: .4; }
+  50% { opacity: 1; }
+}
+
+/* ---------------------------------------------------------------- 06 代码 / 编辑器 / 内存图 */
+html[data-skin="obs"] .codeBox{
+  margin: 24px 0;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--line2);
+  border-radius: 0;
+  box-shadow: none;
+  background: rgba(8, 12, 18, .78);
+  overflow: hidden;
+  position: relative;
+}
+
+html[data-skin="obs"] .codeBoxHead{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(10, 15, 24, .85);
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+html[data-skin="obs"] .codeDots{
+  display: flex;
+  gap: 4px;
+}
+
+html[data-skin="obs"] .codeDots i{
+  width: 5px;
+  height: 5px;
+  border-radius: 0;
+  background: rgba(232, 232, 232, .22);
+}
+
+html[data-skin="obs"] .codeDots i:first-child{ background: var(--const-red); }
+html[data-skin="obs"] .codeDots i:nth-child(2){ background: var(--const-yellow); }
+html[data-skin="obs"] .codeDots i:nth-child(3){ background: var(--const-blue); }
+
+html[data-skin="obs"] .codeBoxHead .cbT{
+  font-size: 8.5px;
+  letter-spacing: .14em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+html[data-skin="obs"] .codeBoxHead .cbT b{
+  font-weight: 400;
+  color: var(--text2);
+}
+
+html[data-skin="obs"] .codeBoxHead .pill{
+  margin-left: 6px;
+  font-size: 8px;
+  padding: 0 5px;
+  color: var(--const-yellow);
+  border-color: rgba(215, 171, 97, .3);
+}
+
+html[data-skin="obs"] .codeBox > pre{
+  margin: 0;
+  padding: 15px 16px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.82;
+  color: var(--codeText);
+  background: none;
+  tab-size: 4;
+}
+
+html[data-skin="obs"] .codeBox > pre .line{
+  display: block;
+  white-space: pre;
+  position: relative;
+}
+
+html[data-skin="obs"] .codeBox > pre .ln{
+  display: inline-block;
+  width: 26px;
+  margin-right: 14px;
+  color: var(--codeGutter);
+  font-size: 10.5px;
+  text-align: right;
+  user-select: none;
+}
+
+html[data-skin="obs"] .codeBox > pre .line.focus, html[data-skin="obs"] .codeBox > pre .ln.focus{
+  background: rgba(224, 98, 54, .07);
+}
+
+html[data-skin="obs"] .codeBox > pre .line.focus .ln{
+  color: var(--const-orange);
+}
+
+/* 语法高亮 token（app.css 里已按 --tk-* 上色，这里补足关键字字重） */
+html[data-skin="obs"] .codeBox .kw{ color: var(--tk-kw); }
+html[data-skin="obs"] .codeBox .str{ color: var(--tk-str); }
+html[data-skin="obs"] .codeBox .num{ color: var(--tk-num); }
+html[data-skin="obs"] .codeBox .cmt{ color: var(--tk-cmt); font-style: italic; }
+html[data-skin="obs"] .codeBox .fn{ color: var(--tk-fn); }
+html[data-skin="obs"] .codeBox .cls, html[data-skin="obs"] .codeBox .type{ color: var(--tk-type); }
+html[data-skin="obs"] .codeBox .meth{ color: var(--tk-meth); }
+
+/* 运行按钮 */
+html[data-skin="obs"] .ed-btn{
+  height: 26px;
+  padding: 0 11px;
+  font-size: 8.5px;
+  border: 1px solid var(--line2);
+  color: var(--text2);
+  background: none;
+}
+
+html[data-skin="obs"] .ed-btn svg{
+  width: 11px;
+  height: 11px;
+}
+
+html[data-skin="obs"] .ed-btn:hover{
+  border-color: var(--const-yellow);
+  color: var(--const-yellow);
+}
+
+html[data-skin="obs"] .ed-btn.primary{
+  border-color: var(--const-orange);
+  color: var(--text-white);
+  background: rgba(224, 98, 54, .1);
+}
+
+html[data-skin="obs"] .ed-btn.primary:hover{
+  background: var(--const-orange);
+  color: #0b0f16;
+}
+
+html[data-skin="obs"] .ed-btn:disabled{
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+/* 编辑器面板 */
+html[data-skin="obs"] .ed{
+  border: 1px solid var(--line);
+  background: rgba(8, 12, 18, .82);
+  margin: 24px 0;
+}
+
+html[data-skin="obs"] .ed-toolbar{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .1em;
+  color: var(--text-dim);
+  background: rgba(10, 15, 24, .8);
+}
+
+html[data-skin="obs"] .ed-toolbar .spacer{
+  flex: 1;
+}
+
+html[data-skin="obs"] .ed-main{
+  display: flex;
+  align-items: stretch;
+  position: relative;
+  background: rgba(8, 12, 18, .5);
+}
+
+html[data-skin="obs"] .ed-gutter{
+  flex: 0 0 42px;
+  align-self: stretch;
+  padding: 10px 8px 10px 0;
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 21px;
+  color: var(--codeGutter);
+  background: rgba(9, 13, 20, .5);
+  border-right: 1px solid rgba(59, 78, 107, .3);
+  user-select: none;
+  overflow: hidden;
+}
+
+html[data-skin="obs"] .ed-gutter span{
+  display: block;
+  height: 21px;
+}
+
+html[data-skin="obs"] .ed-scroll{
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+html[data-skin="obs"] .ed-hl{
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 21px;
+  padding: 10px 14px;
+  margin: 0;
+  white-space: pre;
+  tab-size: 4;
+  color: var(--codeText);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+html[data-skin="obs"] .ed-area{
+  display: block;
+  width: 100%;
+  min-height: 120px;
+  margin: 0;
+  padding: 10px 14px;
+  border: 0;
+  resize: none;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--const-orange);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 21px;
+  white-space: pre;
+  tab-size: 4;
+  overflow: auto;
+  outline: none;
+  position: relative;
+  z-index: 2;
+  box-sizing: border-box;
+}
+
+html[data-skin="obs"] .ed-area::selection{
+  background: rgba(224, 98, 54, .28);
+  color: transparent;
+}
+
+html[data-skin="obs"] .ed-out{
+  border-top: 1px solid var(--line);
+  background: rgba(8, 12, 18, .6);
+}
+
+html[data-skin="obs"] .ed-outHead{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 12px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border-bottom: 1px solid rgba(59, 78, 107, .3);
+}
+
+html[data-skin="obs"] .ed-outBody{
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.85;
+  color: #cfe0c0;
+  white-space: pre-wrap;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+html[data-skin="obs"] .ed-outBody.empty{
+  color: var(--text-dim);
+}
+
+html[data-skin="obs"] .ed-err{
+  border-left: 2px solid var(--const-red);
+  color: #e5a3ab;
+  padding: 8px 12px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.8;
+  background: rgba(200, 35, 55, .06);
+  margin: 8px 0;
+}
+
+html[data-skin="obs"] .ed-panel{
+  border-top: 1px solid var(--line);
+  padding: 12px;
+}
+
+html[data-skin="obs"] .ed-panelT{
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+/* 调试 / 单步 */
+html[data-skin="obs"] .ed-debug{
+  display: flex;
+  gap: 1px;
+  background: var(--line);
+  border-top: 1px solid var(--line);
+}
+
+html[data-skin="obs"] .ed-dbgBar{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(10, 15, 24, .85);
+  border-bottom: 1px solid var(--line);
+}
+
+html[data-skin="obs"] .ed-dbgBody{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--line);
+}
+
+html[data-skin="obs"] .varTable{
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 10.5px;
+}
+
+html[data-skin="obs"] .varTable th{
+  text-align: left;
+  font-weight: 400;
+  font-size: 8px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+html[data-skin="obs"] .varTable td{
+  padding: 4px 8px;
+  border-bottom: 1px solid rgba(59, 78, 107, .22);
+  color: var(--text2);
+}
+
+html[data-skin="obs"] .varTable .vn{ color: var(--const-yellow); }
+html[data-skin="obs"] .varTable .vt{ color: var(--accent2); }
+html[data-skin="obs"] .varTable .fv{ color: var(--text-white); }
+
+html[data-skin="obs"] .stackFrame{
+  padding: 6px 8px;
+  border: 1px solid rgba(59, 78, 107, .35);
+  margin-bottom: 6px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--text2);
+}
+
+html[data-skin="obs"] .stackFrame .sfn{
+  color: var(--const-yellow);
+}
+
+html[data-skin="obs"] .stackFrame .sfl{
+  color: var(--text-dim);
+  font-size: 9.5px;
+}
+
+html[data-skin="obs"] .stackFrame.active{
+  border-color: var(--const-orange);
+}
+
+/* 内存图 */
+html[data-skin="obs"] .mem{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 10px;
+  background: rgba(8, 12, 18, .55);
+  font-family: var(--mono);
+  font-size: 10.5px;
+}
+
+html[data-skin="obs"] .memCol{
+  border: 1px solid var(--line);
+  padding: 8px;
+  min-width: 0;
+}
+
+html[data-skin="obs"] .memColT{
+  font-size: 8px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 5px;
+  margin-bottom: 7px;
+}
+
+html[data-skin="obs"] .memFrame{
+  border: 1px solid rgba(59, 78, 107, .35);
+  margin-bottom: 6px;
+  padding: 5px 7px;
+}
+
+html[data-skin="obs"] .memFrameH{
+  color: var(--const-yellow);
+  font-size: 9.5px;
+  margin-bottom: 4px;
+}
+
+html[data-skin="obs"] .memVar{
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 0;
+  color: var(--text2);
+  font-size: 9.5px;
+}
+
+html[data-skin="obs"] .memVar .nm{ color: var(--text-dim); }
+html[data-skin="obs"] .memVar .mref{ color: var(--const-orange); }
+html[data-skin="obs"] .memObj{
+  border: 1px solid rgba(59, 78, 107, .4);
+  margin-bottom: 6px;
+  padding: 5px 7px;
+}
+
+html[data-skin="obs"] .memObjH{
+  color: var(--accent2);
+  font-size: 9.5px;
+  margin-bottom: 4px;
+}
+
+html[data-skin="obs"] .memArr{
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+html[data-skin="obs"] .memCell{
+  border: 1px solid var(--line2);
+  padding: 2px 5px;
+  min-width: 22px;
+  text-align: center;
+  color: var(--text-white);
+  font-size: 9.5px;
+}
+
+html[data-skin="obs"] .memCell.changed{
+  border-color: var(--const-orange);
+  color: var(--const-orange);
+}
+
+html[data-skin="obs"] .memIdx{
+  color: var(--text-dim);
+  font-size: 8.5px;
+}
+
+html[data-skin="obs"] .memEmpty{
+  color: var(--text-dim);
+  font-size: 10.5px;
+  padding: 10px;
+  text-align: center;
+}
+
+html[data-skin="obs"] .memHost{
+  margin: 26px 0;
+}
+
+/* ---------------------------------------------------------------- 07 章节内嵌交互组件 */
+/* 实验台 */
+html[data-skin="obs"] .lab{
+  box-shadow: none;
+  margin: 26px 0;
+  border: 1px solid var(--line);
+  background: rgba(9, 13, 20, .34);
+  position: relative;
+}
+
+html[data-skin="obs"] .lab::before{
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 22px;
+  height: 1px;
+  background: var(--const-orange);
+}
+
+html[data-skin="obs"] .labHead{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(10, 15, 24, .8);
+}
+
+html[data-skin="obs"] .labIcon{
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line2);
+  color: var(--const-yellow);
+}
+
+html[data-skin="obs"] .labIcon svg{
+  width: 14px;
+  height: 14px;
+}
+
+html[data-skin="obs"] .labTt{
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+html[data-skin="obs"] .labTt b{
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: .06em;
+  color: var(--text-white);
+}
+
+html[data-skin="obs"] .labTt span{
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .08em;
+  color: var(--text-dim);
+}
+
+html[data-skin="obs"] .labStatLine{
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .12em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-skin="obs"] .labStatLine b{
+  color: var(--const-yellow);
+  font-weight: 400;
+}
+
+html[data-skin="obs"] .labTag{
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  border: 1px solid var(--line);
+  padding: 2px 7px;
+}
+
+html[data-skin="obs"] .labBody{
+  padding: 14px 16px 16px;
+}
+
+html[data-skin="obs"] .labStage{
+  border: 1px solid rgba(59, 78, 107, .3);
+  background: rgba(8, 12, 18, .42);
+  padding: 12px;
+}
+
+html[data-skin="obs"] .labCtl{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+html[data-skin="obs"] .labBtn{
+  height: 26px;
+  padding: 0 11px;
+  border: 1px solid var(--line2);
+  background: none;
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .1em;
+  cursor: pointer;
+  border-radius: 0;
+  transition: all var(--dur);
+}
+
+html[data-skin="obs"] .labBtn:hover{
+  border-color: var(--const-orange);
+  color: var(--text-white);
+}
+
+html[data-skin="obs"] .labBtn.primary{
+  border-color: var(--const-orange);
+  color: var(--const-orange);
+}
+
+html[data-skin="obs"] .labBtn:disabled{
+  opacity: .4;
+  cursor: not-allowed;
+}
+
+html[data-skin="obs"] .labSlider{
+  -webkit-appearance: none;
+  appearance: none;
+  height: 14px;
+  background: transparent;
+  cursor: pointer;
+}
+
+html[data-skin="obs"] .labSlider::-webkit-slider-runnable-track{
+  height: 1px;
+  background: var(--line-color);
+}
+
+html[data-skin="obs"] .labSlider::-webkit-slider-thumb{
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  margin-top: -5px;
+  background: var(--bg-navy);
+  border: 1px solid var(--const-orange);
+  border-radius: 0;
+}
+
+html[data-skin="obs"] .labSelect{
+  height: 26px;
+  border: 1px solid var(--line2);
+  background: rgba(9, 13, 20, .7);
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .06em;
+  padding: 0 6px;
+  border-radius: 0;
+}
+
+html[data-skin="obs"] .labStat{
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .08em;
+  color: var(--text-dim);
+}
+
+html[data-skin="obs"] .labStat b{
+  color: var(--const-yellow);
+  font-weight: 400;
+}
+
+html[data-skin="obs"] .labNote{
+  font-family: var(--mono);
+  font-size: 9.5px;
+  line-height: 1.8;
+  letter-spacing: .04em;
+  color: var(--text-dim);
+  margin-top: 10px;
+}
+
+/* 题库卡片 */
+html[data-skin="obs"] .qzCard{
+  box-shadow: none;
+  margin: 26px 0;
+  border: 1px solid var(--line);
+  background: rgba(9, 13, 20, .34);
+  border-radius: 0;
+}
+
+html[data-skin="obs"] .qzHead{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(10, 15, 24, .82);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+html[data-skin="obs"] .qzHead .qn{
+  color: var(--const-orange);
+}
+
+html[data-skin="obs"] .qzHead .qch{
+  color: var(--text-dim);
+}
+
+html[data-skin="obs"] .qzHead .qdiff{
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+html[data-skin="obs"] .qzHead .qdiff i{
+  display: block;
+  width: 5px;
+  height: 8px;
+  border: 1px solid var(--line2);
+  background: none;
+}
+
+html[data-skin="obs"] .qzHead .qdiff i.on{
+  border-color: var(--const-orange);
+  background: var(--const-orange);
+}
+
+html[data-skin="obs"] .qzHead .qt{
+  color: var(--const-yellow);
+  letter-spacing: .16em;
+}
+
+html[data-skin="obs"] .qzHead .qch{
+  color: var(--text3);
+}
+
+html[data-skin="obs"] .qzBody{
+  padding: 16px 18px 18px;
+}
+
+html[data-skin="obs"] .qzStem{
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+
+html[data-skin="obs"] .qzCode, html[data-skin="obs"] .qzCard pre{
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: var(--codeText);
+  background: rgba(8, 12, 18, .7);
+  border: 1px solid var(--line);
+  padding: 10px 12px;
+  overflow-x: auto;
+  margin: 0 0 14px;
+  white-space: pre-wrap;
+}
+
+html[data-skin="obs"] .qzOpts{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+html[data-skin="obs"] .qzOpt{
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 12px;
+  border: 1px solid rgba(59, 78, 107, .4);
+  background: rgba(9, 13, 20, .3);
+  cursor: pointer;
+  font-size: 13.5px;
+  line-height: 1.8;
+  color: var(--text2);
+  transition: all var(--dur);
+}
+
+html[data-skin="obs"] .qzOpt:hover{
+  border-color: var(--line2);
+  color: var(--text-white);
+}
+
+html[data-skin="obs"] .qzOpt.sel{
+  border-color: var(--const-orange);
+  color: var(--text-white);
+  background: rgba(224, 98, 54, .07);
+}
+
+html[data-skin="obs"] .qzOpt .qn{
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--text-dim);
+  min-width: 18px;
+  flex: 0 0 18px;
+  padding-top: 3px;
+}
+
+html[data-skin="obs"] .qzOpt .qo{
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text2);
+  font-family: var(--font);
+}
+
+html[data-skin="obs"] .qzOpt.sel .qn{
+  color: var(--const-orange);
+}
+
+html[data-skin="obs"] .qzOpt.sel .qo{
+  color: var(--text-white);
+}
+
+html[data-skin="obs"] .qzInputRow{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+html[data-skin="obs"] .qzInput, html[data-skin="obs"] .qzTextarea{
+  font-family: var(--mono);
+  font-size: 11.5px;
+  padding: 8px 11px;
+  background: rgba(8, 12, 18, .7);
+  border: 1px solid var(--line2);
+  color: var(--text-white);
+  border-radius: 0;
+  outline: none;
+}
+
+html[data-skin="obs"] .qzInput:focus, html[data-skin="obs"] .qzTextarea:focus{
+  border-color: var(--const-orange);
+}
+
+html[data-skin="obs"] .qzTextarea{
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+  line-height: 1.8;
+}
+
+html[data-skin="obs"] .qzActions{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  align-items: center;
+}
+
+html[data-skin="obs"] .qzHintBtn{
+  border: 0;
+  background: none;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .12em;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 4px 0;
+  text-transform: uppercase;
+  border-bottom: 1px solid transparent;
+}
+
+html[data-skin="obs"] .qzHintBtn:hover{
+  color: var(--const-yellow);
+  border-bottom-color: rgba(215, 171, 97, .4);
+}
+
+html[data-skin="obs"] .qzFb{
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--line2);
+  background: rgba(9, 13, 20, .4);
+}
+
+html[data-skin="obs"] .qzFb.ok{
+  border-left-color: var(--ok);
+}
+
+html[data-skin="obs"] .qzFb.err{
+  border-left-color: var(--const-red);
+}
+
+html[data-skin="obs"] .qzFbHead{
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  color: var(--text-dim);
+}
+
+html[data-skin="obs"] .qzFb.ok .qzFbHead{ color: var(--ok); }
+html[data-skin="obs"] .qzFb.err .qzFbHead{ color: #d9818f; }
+
+html[data-skin="obs"] .qzFbBody{
+  font-size: 13.5px;
+  line-height: 1.9;
+  color: var(--text2);
+}
+
+html[data-skin="obs"] .qzFbBody code{
+  font-family: var(--mono);
+}
+
+html[data-skin="obs"] .qzProgress, html[data-skin="obs"] .qzProgBar, html[data-skin="obs"] .qzDone, html[data-skin="obs"] .qzStreak{
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .1em;
+  color: var(--text-dim);
+}
+
+html[data-skin="obs"] .qzProgBar{
+  height: 1px;
+  background: var(--line);
+  margin: 10px 0;
+  position: relative;
+}
+
+html[data-skin="obs"] .qzProgBar i{
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--const-orange);
+}
+
+/* 题库页 / 实验台页头（后续页面复用） */
+html[data-skin="obs"] .pageHead{
+  position: relative;
+  margin: 0 0 34px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+html[data-skin="obs"] .pageHead .chKicker{
+  margin-top: 0;
+}
+
+html[data-skin="obs"] .pageHead h1{
+  font-family: var(--font);
+  font-weight: 300;
+  font-size: clamp(26px, 2.8vw, 36px);
+  letter-spacing: .05em;
+  margin: 12px 0 8px;
+  color: var(--text-white);
+}
+
+html[data-skin="obs"] .pageHead .pageEn{
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--const-yellow);
+  margin-bottom: 14px;
+}
+
+html[data-skin="obs"] .pageHead .pageLead{
+  font-size: 14px;
+  line-height: 1.95;
+  color: var(--text2);
+  max-width: 68ch;
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------- 08 本章目录栏 */
+html[data-skin="obs"] .rail{
+  width: var(--rail-w);
+  flex: 0 0 var(--rail-w);
+  position: sticky;
+  top: calc(var(--top-h) + 18px);
+  align-self: flex-start;
+  max-height: calc(100vh - var(--top-h) - 36px);
+  overflow-y: auto;
+  padding: 4px 0 60px 0;
+  border-left: 1px solid var(--line);
+  padding-left: 20px;
+}
+
+html[data-skin="obs"] .railTitle{
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--text3);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line2);
+  margin-bottom: 12px;
+}
+
+html[data-skin="obs"] .railNav{
+  display: flex;
+  flex-direction: column;
+}
+
+html[data-skin="obs"] .railLink{
+  position: relative;
+  padding: 5.5px 0 5.5px 11px;
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--text-dim);
+  text-decoration: none;
+  border-left: 1px solid rgba(59, 78, 107, .35);
+  margin-left: -1px;
+  transition: color var(--dur), border-color var(--dur);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html[data-skin="obs"] .railLink.h3{
+  padding-left: 20px;
+  font-size: 11.5px;
+  color: rgba(109, 125, 140, .8);
+}
+
+html[data-skin="obs"] .railLink:hover{
+  color: var(--text-white);
+  border-left-color: var(--line2);
+  text-decoration: none;
+}
+
+html[data-skin="obs"] .railLink.active{
+  color: var(--text-white);
+  border-left: 1px solid var(--const-orange);
+}
+
+html[data-skin="obs"] .railCard2{
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.9;
+  color: var(--text-dim);
+}
+
+html[data-skin="obs"] .railCard2 > b{
+  display: block;
+  font-size: 8.5px;
+  font-weight: 400;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+html[data-skin="obs"] .railCard2 a{
+  color: var(--const-orange);
+  border: 0;
+  font-size: 10.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+html[data-skin="obs"] .railCard2 a:hover{
+  border: 0;
+  color: var(--const-yellow);
+}
+
+/* 随机挑战弹窗（rqHead / rqK / rqCh / rqHost） */
+html[data-skin="obs"] .rqHead{
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+html[data-skin="obs"] .rqK{
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--const-orange);
+}
+
+html[data-skin="obs"] .rqCh{
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .12em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+html[data-skin="obs"] .rqHost{
+  margin-top: 4px;
+}
+
+html[data-skin="obs"] .rqHost .qzCard{
+  margin: 0;
+}
+
+html[data-skin="obs"] .bootLog{
+  font-family: var(--mono);
+}
+
+/* ---------------------------------------------------------------- 09 动效 */
+html[data-skin="obs"] .reveal{
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity .5s var(--ease), transform .5s var(--ease);
+}
+
+html[data-skin="obs"] .reveal.in{
+  opacity: 1;
+  transform: none;
+}
+
+html[data-skin="obs"] .content{
+  animation: pageIn .38s var(--ease);
+}
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* 页面框架角标：内容区四角细线，营造观测窗 */
+html[data-skin="obs"] .main{
+  position: relative;
+}
+
+html[data-skin="obs"] .main::before, html[data-skin="obs"] .main::after{
+  content: "";
+  position: fixed;
+  width: 14px;
+  height: 14px;
+  border-color: rgba(59, 78, 107, .8);
+  border-style: solid;
+  z-index: 25;
+  pointer-events: none;
+}
+
+html[data-skin="obs"] .main::before{
+  display: none;
+}
+
+html[data-skin="obs"] .main::after{
+  right: calc(var(--edgebar-gap) + var(--edgebar-w) + 12px);
+  bottom: 12px;
+  border-width: 0 1px 1px 0;
+}
+
+/* 小高度笔记本：压缩首页纵向节奏，避免 dock 与星图打架 */
+@media (max-height: 800px) {
+  html[data-skin="obs"] .missionDock {
+    top: 3vh;
+  }
+
+  html[data-skin="obs"] .missionT {
+    font-size: clamp(24px, 2.4vw, 32px);
+    line-height: 1.2;
+  }
+
+  html[data-skin="obs"] .missionEn {
+    display: none;
+  }
+
+  html[data-skin="obs"] .missionLede {
+    font-size: 12.5px;
+    margin-bottom: 14px;
+    max-width: 34ch;
+  }
+
+  html[data-skin="obs"] .missionBtns {
+    margin-bottom: 0;
+  }
+
+
+
+
+
+  html[data-skin="obs"] .bottomHud {
+    bottom: 10px;
+  }
+
+  html[data-skin="obs"] .stageHint {
+    display: none;
+  }
+
+  html[data-skin="obs"] .dockRows {
+    margin-top: 14px;
+    line-height: 2;
+  }
+
+  html[data-skin="obs"] .dockRows .sysTerm {
+    min-height: 62px;
+  }
+}
+
+/* ---------------------------------------------------------------- 10 响应式 */
+@media (max-width: 1400px) {
+  html[data-skin="obs"] .missionDock{
+    left: 26px;
+    width: min(400px, 38%);
+  }
+
+  html[data-skin="obs"] .systemDock{
+    right: 4px;
+    width: min(330px, 32%);
+  }
+
+}
+
+@media (max-width: 1180px) {
+  html[data-skin="obs"] .edgebar{
+    display: none;
+  }
+
+  html[data-skin="obs"] .orbitLegend{
+    display: none;
+  }
+
+  html[data-skin="obs"] .partTag{
+    font-size: 8px;
+    letter-spacing: .12em;
+    gap: 0;
+  }
+
+  html[data-skin="obs"] .partTag span, html[data-skin="obs"] .partTag i{
+    display: none;
+  }
+
+  html[data-skin="obs"] .body{
+    padding-left: 26px;
+    padding-right: 26px;
+  }
+
+  html[data-skin="obs"] .contentWrap{
+    max-width: 100%;
+  }
+
+  html[data-skin="obs"] .missionDock{
+    left: 26px;
+    width: min(430px, 46%);
+  }
+
+  html[data-skin="obs"] .missionBtns .btnPrimary,
+  html[data-skin="obs"] .missionBtns .btnGhost{
+    padding: 0 10px;
+    font-size: 10.5px;
+  }
+
+  html[data-skin="obs"] .results{
+    left: 26px;
+    width: min(680px, calc(100vw - 52px));
+  }
+
+  html[data-skin="obs"] .main{
+    padding-right: 0;
+  }
+
+  html[data-skin="obs"] .main::after{
+    display: none;
+  }
+
+  html[data-skin="obs"] .rail{
+    display: none;
+  }
+
+  html[data-skin="obs"] .body{
+    justify-content: center;
+  }
+
+
+  html[data-skin="obs"] .systemDock{
+    width: 300px;
+  }
+}
+
+@media (max-width: 1024px) {
+  html[data-skin="obs"] .missionDock{
+    width: min(430px, 46%);
+  }
+
+  html[data-skin="obs"] .systemDock{
+    width: 280px;
+  }
+
+  html[data-skin="obs"] .missionBtns .btnPrimary,
+  html[data-skin="obs"] .missionBtns .btnGhost{
+    padding: 0 9px;
+    font-size: 9.5px;
+    letter-spacing: .03em;
+  }
+}
+
+@media (max-width: 900px) {
+  html[data-skin="obs"]{
+    overflow-x: hidden;
+    --sidebar-w: 0px;
+    --top-h: 52px;
+    --maxw: 100%;
+  }
+
+  html[data-skin="obs"] .sidebar{
+    transform: translateX(-100%);
+    transition: transform .28s var(--ease);
+    width: 276px;
+    z-index: 48;
+    box-shadow: 20px 0 60px -20px rgba(0, 0, 0, .8);
+  }
+
+  html[data-skin="obs"] .sidebar.open{
+    transform: none;
+  }
+
+  html[data-skin="obs"] .scrim{
+    position: fixed;
+    inset: 0;
+    z-index: 46;
+    background: rgba(5, 8, 12, .6);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+  }
+
+  html[data-skin="obs"] .scrim.on{
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  html[data-skin="obs"] .main{
+    margin-left: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  html[data-skin="obs"] .main::before{
+    left: 12px;
+  }
+
+  html[data-skin="obs"] .topbar{
+    padding-left: 12px;
+    padding-right: 8px;
+    gap: 10px;
+  }
+
+  html[data-skin="obs"] .topActions .pillBtn{
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  html[data-skin="obs"] .topActions .pillBtn .lbl{
+    display: none;
+  }
+
+  html[data-skin="obs"] .searchWrap{
+    max-width: none;
+    min-width: 0;
+  }
+
+  html[data-skin="obs"] #q{
+    font-size: 9.5px;
+    padding-right: 40px;
+  }
+
+  html[data-skin="obs"] .chTop{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 7px;
+  }
+
+  html[data-skin="obs"] .chCrumbs{
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  html[data-skin="obs"] .chSeq{
+    font-size: 8px;
+  }
+
+  html[data-skin="obs"] .chKicker{
+    margin-top: 20px;
+    font-size: 8.5px;
+    letter-spacing: .16em;
+  }
+
+  html[data-skin="obs"] .chEn{
+    letter-spacing: .16em;
+    font-size: 9.5px;
+  }
+
+  html[data-skin="obs"] .metaItem{
+    padding-right: 12px;
+    margin-right: 12px;
+  }
+
+  html[data-skin="obs"] .metaK{
+    font-size: 8px;
+    letter-spacing: .14em;
+  }
+
+  html[data-skin="obs"] .metaV{
+    font-size: 11.5px;
+  }
+
+  html[data-skin="obs"] .onlyMobile{
+    display: grid !important;
+  }
+
+  html[data-skin="obs"] .gaugeSide{
+    display: none;
+  }
+
+  html[data-skin="obs"] .gauge{
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  html[data-skin="obs"] .gaugeMain{
+    border-right: 0;
+  }
+
+  html[data-skin="obs"] .searchWrap{
+    max-width: none;
+  }
+
+  html[data-skin="obs"] .body{
+    padding: 18px 18px 0;
+  }
+
+  html[data-skin="obs"] .contentWrap{
+    padding-bottom: 90px;
+  }
+
+  html[data-skin="obs"] .results{
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+
+  html[data-skin="obs"] .content p,
+  html[data-skin="obs"] .content li,
+  html[data-skin="obs"] .callout .cb,
+  html[data-skin="obs"] .goalsBox li{
+    overflow-wrap: break-word;
+  }
+
+  html[data-skin="obs"] .content :not(pre) > code{
+    overflow-wrap: anywhere;
+  }
+
+  /* 首页改版式：纵向列出模块 */
+  html[data-skin="obs"] .starStage{
+    height: auto;
+    min-height: 0;
+    padding: 22px 0 60px;
+  }
+
+  html[data-skin="obs"] .missionDock, html[data-skin="obs"] .systemDock{
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    width: 100%;
+    text-align: left;
+    border-right: 0;
+    padding-right: 0;
+  }
+
+  html[data-skin="obs"] .missionDock{
+    padding: 0 18px;
+  }
+
+  html[data-skin="obs"] .systemDock{
+    margin-top: 26px;
+    padding: 18px;
+    border-top: 1px solid var(--line);
+  }
+
+  html[data-skin="obs"] .dockRows{
+    text-align: left;
+    border-right: 0;
+    padding-right: 0;
+    margin-top: 16px;
+  }
+
+  html[data-skin="obs"] .dockTitle{
+    font-size: 26px;
+    letter-spacing: .12em;
+  }
+
+  html[data-skin="obs"] .solarSystem, html[data-skin="obs"] .bottomHud, html[data-skin="obs"] .fovWrap, html[data-skin="obs"] .stageHint, html[data-skin="obs"] .orbitLegend{
+    display: none;
+  }
+
+  html[data-skin="obs"] .moduleIndex{
+    display: block;
+    margin: 26px 14px 0;
+    border-top: 1px solid var(--line);
+  }
+
+  html[data-skin="obs"] .moduleIndex .miHead{
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 8.5px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 14px 4px 10px;
+  }
+
+  html[data-skin="obs"] .miRow{
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 4px;
+    border-bottom: 1px solid rgba(59, 78, 107, .3);
+    text-decoration: none;
+    border-left: 1px solid transparent;
+  }
+
+  html[data-skin="obs"] .miRow:active{
+    background: rgba(232, 232, 232, .03);
+  }
+
+  html[data-skin="obs"] .miNum{
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--const-orange);
+    min-width: 26px;
+  }
+
+  html[data-skin="obs"] .miMain{
+    flex: 1;
+    min-width: 0;
+  }
+
+  html[data-skin="obs"] .miMain{
+    display: block;
+  }
+
+  html[data-skin="obs"] .miT{
+    display: block;
+    font-size: 14px;
+    color: var(--text-white);
+    letter-spacing: .04em;
+    margin-bottom: 3px;
+  }
+
+  html[data-skin="obs"] .miE{
+    display: block;
+    font-family: var(--mono);
+    font-size: 8.5px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  html[data-skin="obs"] .miPart{
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: .14em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  html[data-skin="obs"] .miArrow{
+    color: var(--text-dim);
+    font-size: 11.5px;
+  }
+
+  html[data-skin="obs"] .blockP{
+    font-size: 15.5px;
+    line-height: 1.95;
+  }
+
+  html[data-skin="obs"] .chTitle{
+    font-size: 26px;
+  }
+
+  html[data-skin="obs"] .chMeta{
+    gap: 0;
+  }
+
+  html[data-skin="obs"] .metaItem{
+    padding-right: 14px;
+    margin-right: 14px;
+  }
+
+  html[data-skin="obs"] .metaV{
+    font-size: 13.5px;
+  }
+
+  html[data-skin="obs"] .termsGrid, html[data-skin="obs"] .compare, html[data-skin="obs"] .gridBlock.c2, html[data-skin="obs"] .gridBlock.c3, html[data-skin="obs"] .chNav, html[data-skin="obs"] .mem{
+    grid-template-columns: 1fr;
+  }
+
+  html[data-skin="obs"] .mem{
+    display: block;
+  }
+
+  html[data-skin="obs"] .memCol + .memCol{
+    margin-top: 10px;
+  }
+
+  html[data-skin="obs"] .ed-dbgBody{
+    grid-template-columns: 1fr;
+  }
+
+  html[data-skin="obs"] .chWatermark{
+    display: none;
+  }
+
+  html[data-skin="obs"] .toTop{
+    right: 16px;
+    bottom: 16px;
+  }
+
+  html[data-skin="obs"] .tableWrap table{
+    font-size: 12.5px;
+  }
+
+  /* ---- 触控目标（仅 ≤900px；桌面端尺寸不变）----
+     代码块「运行」、顶栏按钮、面包屑、命令面板条目等交互元素最小 36px，
+     满足 iOS/Android 触控指南（≥36–44px）。 */
+  html[data-skin="obs"] .ed-btn,
+  html[data-skin="obs"] .pillBtn,
+  html[data-skin="obs"] .iconBtn,
+  html[data-skin="obs"] .chCrumbs a,
+  html[data-skin="obs"] .cmdkItem,
+  html[data-skin="obs"] .tabBtn,
+  html[data-skin="obs"] .qzBtn,
+  html[data-skin="obs"] .btnPrimary,
+  html[data-skin="obs"] .btnGhost,
+  html[data-skin="obs"] #q,
+  html[data-skin="obs"] .qzInput{
+    min-height: 36px;
+  }
+
+  html[data-skin="obs"] .iconBtn{
+    min-width: 36px;
+  }
+
+  /* ---- 可横滑提示（P2-12）----
+     移动端代码块 / 编辑器比屏幕宽，右侧加一层渐隐 + 角标 ⟷；
+     pointer-events:none 保证不拦截横向拖动与点击。 */
+  html[data-skin="obs"] .codeBox:has(> pre)::after{
+    content: "⟷";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 30px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1;
+    color: var(--const-yellow);
+    background: linear-gradient(90deg, transparent, var(--bg-deep) 62%);
+    pointer-events: none;
+  }
+
+  html[data-skin="obs"] .ed-main{
+    position: relative;
+  }
+
+  html[data-skin="obs"] .ed-main::after{
+    content: "⟷";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 28px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1;
+    color: var(--const-yellow);
+    background: linear-gradient(90deg, transparent, var(--bg-deep) 60%);
+    pointer-events: none;
+  }
+}
+
+/* ---------------------------------------------------------------- 10a 键盘焦点补丁
+   全局 :focus-visible 是 1px 橙色细线（见 02 外壳）；下列组件为了外观把 outline 清成了 none，
+   这里用更高权重把焦点环补回来，保证 a / button / chip / input / 可点击卡片 都能看到 Tab 焦点，
+   弹窗（.modal）与命令面板（.cmdk）内部元素同样适用。 */
+html[data-skin="obs"] .ed-area:focus-visible{
+  outline: 1px solid var(--const-orange);
+  outline-offset: -2px;   /* 文本域被 .ed-scroll 裁切，焦点环向内收 2px 才完整可见 */
+}
+
+html[data-skin="obs"] .qzInput:focus-visible,
+html[data-skin="obs"] .qzTextarea:focus-visible,
+html[data-skin="obs"] #q:focus-visible{
+  outline: 1px solid var(--const-orange);
+  outline-offset: 1px;
+}
+
+/* 可点击卡片 / 首页纵向入口：Tab 聚焦时同样有细线描边 */
+html[data-skin="obs"] .chCard:focus-visible,
+html[data-skin="obs"] .miRow:focus-visible{
+  outline: 1px solid var(--const-orange);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------- 11 降级 */
+@media (prefers-reduced-motion: reduce) {
+  html[data-skin="obs"] *, html[data-skin="obs"] *::before, html[data-skin="obs"] *::after{
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+
+  html[data-skin="obs"] .curtain{
+    display: none;
+  }
+
+  /* 悬停位移在 reduced-motion 下也取消（颜色 / 细线反馈保留） */
+  html[data-skin="obs"] .chCard:hover,
+  html[data-skin="obs"] .termCard:hover,
+  html[data-skin="obs"] .btnPrimary:hover{
+    transform: none;
+  }
+}
+
+/* 打印：研究模式（去掉观测窗装饰，按纸张阅读优化）
+   目标：无论浏览器是否勾选「打印背景图形」，代码块 / 提示卡 / 表格都是白底深字；
+   屏幕样式不受影响（全部位于 @media print 内，用固定白/黑色值）。 */
+@media print {
+  html[data-skin="obs"]{ zoom: 1 !important; }
+  html[data-skin="obs"] #topoCanvas, html[data-skin="obs"] .edgebar, html[data-skin="obs"] .curtain, html[data-skin="obs"] .boot, html[data-skin="obs"] .sidebar, html[data-skin="obs"] .topbar, html[data-skin="obs"] .rail, html[data-skin="obs"] .toTop, html[data-skin="obs"] .main::before, html[data-skin="obs"] .main::after{
+    display: none !important;
+  }
+
+  html[data-skin="obs"] .main{
+    margin: 0;
+    padding: 0;
+  }
+
+  /* 纸张白底：html 与 body 都铺白，避免深色画布漏印 */
+  html[data-skin="obs"],
+  html[data-skin="obs"] body{
+    background: #fff;
+    color: #111;
+  }
+
+  html[data-skin="obs"] .content *{
+    color: #111 !important;
+  }
+
+  /* 正文链接：只留文字，去掉橙色细下划线（仍可辨认） */
+  html[data-skin="obs"] .content a{
+    border-bottom: 0 !important;
+    text-decoration: underline;
+  }
+
+  /* ---- 代码块：白底 + 1px 细线框 + 深色字（静态代码 / 编辑器 / 对比卡） ---- */
+  html[data-skin="obs"] .codeBox,
+  html[data-skin="obs"] .codeBoxHead,
+  html[data-skin="obs"] .cmpCard pre,
+  html[data-skin="obs"] .dbgCode,
+  html[data-skin="obs"] .ed,
+  html[data-skin="obs"] .ed-main,
+  html[data-skin="obs"] .ed-scroll,
+  html[data-skin="obs"] .ed-hl,
+  html[data-skin="obs"] .ed-gutter,
+  html[data-skin="obs"] .ed-out,
+  html[data-skin="obs"] .ed-outHead,
+  html[data-skin="obs"] .ed-outBody,
+  html[data-skin="obs"] .ed-panel{
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  html[data-skin="obs"] .codeBox,
+  html[data-skin="obs"] .cmpCard pre,
+  html[data-skin="obs"] .dbgCode,
+  html[data-skin="obs"] .ed{
+    border: 1px solid #444 !important;
+  }
+
+  html[data-skin="obs"] .codeBoxHead,
+  html[data-skin="obs"] .ed-toolbar,
+  html[data-skin="obs"] .ed-outHead{
+    border-bottom: 1px solid #444 !important;
+  }
+
+  html[data-skin="obs"] .ed-gutter{
+    border-right: 1px solid #bbb !important;
+    color: #555 !important;
+  }
+
+  /* 编辑器：文本域本体透明、由高亮层出字；打印时保留该分工，避免文字重影 */
+  html[data-skin="obs"] .ed-area{
+    color: transparent !important;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* 打印不滚动：长代码行改折行，避免右侧被纸边裁掉 */
+  html[data-skin="obs"] .codeBox > pre,
+  html[data-skin="obs"] .codeBox > pre .line,
+  html[data-skin="obs"] .cmpCard pre,
+  html[data-skin="obs"] .dbgCode{
+    white-space: pre-wrap !important;
+    word-break: break-word;
+    overflow: visible !important;
+  }
+
+  /* ---- 提示卡：去掉深色 / 彩色底，纸面只保留细线框 ---- */
+  html[data-skin="obs"] .callout{
+    background: #fff !important;
+    border: 1px solid #bbb !important;
+    border-left-width: 3px !important;
+    box-shadow: none !important;
+  }
+
+  /* ---- 表格：表头深底转白底，只留细线分隔 ---- */
+  html[data-skin="obs"] .tableWrap,
+  html[data-skin="obs"] .tableWrap th,
+  html[data-skin="obs"] .tableWrap td,
+  html[data-skin="obs"] .tableWrap tr{
+    background: #fff !important;
+  }
+
+  html[data-skin="obs"] .tableWrap{
+    border: 1px solid #999 !important;
+  }
+
+  html[data-skin="obs"] .tableWrap th{
+    border-bottom: 1px solid #999 !important;
+  }
+
+  html[data-skin="obs"] .tableWrap td{
+    border-bottom: 1px solid #ccc !important;
+  }
+
+  /* 行内代码：去掉深色小底，改浅灰底 + 细边框 */
+  html[data-skin="obs"] .content :not(pre) > code{
+    background: #f4f4f4 !important;
+    border: 1px solid #ccc !important;
+    color: #111 !important;
+  }
+
+  /* ---- 其余深底卡片 / 容器：统一转白底，避免「勾选背景图形」时黑底黑字 ---- */
+  html[data-skin="obs"] .termCard,
+  html[data-skin="obs"] .glossCard,
+  html[data-skin="obs"] .cmpCard,
+  html[data-skin="obs"] .keypoint,
+  html[data-skin="obs"] .checklist,
+  html[data-skin="obs"] .tabsBlock,
+  html[data-skin="obs"] .tabBar,
+  html[data-skin="obs"] .tabPane,
+  html[data-skin="obs"] .qzCard,
+  html[data-skin="obs"] .qzOpt,
+  html[data-skin="obs"] .qzCode,
+  html[data-skin="obs"] .qzFb,
+  html[data-skin="obs"] .qzFbBody,
+  html[data-skin="obs"] .qzGroup,
+  html[data-skin="obs"] .qzGroup > summary,
+  html[data-skin="obs"] .exQ,
+  html[data-skin="obs"] .exCover,
+  html[data-skin="obs"] .exBar,
+  html[data-skin="obs"] .dbgCard,
+  html[data-skin="obs"] .dbgErr,
+  html[data-skin="obs"] .mapWrap,
+  html[data-skin="obs"] .statRow,
+  html[data-skin="obs"] .lab,
+  html[data-skin="obs"] .labBody,
+  html[data-skin="obs"] .labNote,
+  html[data-skin="obs"] .goalsBox,
+  html[data-skin="obs"] .chCard,
+  html[data-skin="obs"] .chHead,
+  html[data-skin="obs"] .pageHead{
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  /* ---- 打印时隐藏纯交互控件 / 浮层 ---- */
+  html[data-skin="obs"] .codeBox:has(> pre)::after,
+  html[data-skin="obs"] .ed-main::after,
+  html[data-skin="obs"] .codeBoxHead .ed-btn,
+  html[data-skin="obs"] .ed-toolbar,
+  html[data-skin="obs"] .ed-panel,
+  html[data-skin="obs"] .qzActions,
+  html[data-skin="obs"] .doneBar,
+  html[data-skin="obs"] .cmdk,
+  html[data-skin="obs"] .modal,
+  html[data-skin="obs"] .scrim,
+  html[data-skin="obs"] .toast,
+  html[data-skin="obs"] .results,
+  html[data-skin="obs"] .stageHint,
+  html[data-skin="obs"] .fovWrap,
+  html[data-skin="obs"] .solarSystem,
+  html[data-skin="obs"] .bottomHud,
+  html[data-skin="obs"] .moduleIndex{
+    display: none !important;
+  }
+}
+
+/* ===== v1.3.0 移动端补丁：长行内代码与实验台图形不撑破卡片 ===== */
+@media (max-width: 900px) {
+  html[data-skin="obs"] .content :not(pre) > code{
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  html[data-skin="obs"] .labStage svg,
+  html[data-skin="obs"] .labStage canvas{
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* =====================================================================
+ * 整页 115% 缩放的布局适配（放在文件末尾以获得优先级）
+ * 缩放后页头读数标题变宽，右侧 SYSTEM 面板按内容自适应，避免被裁切。
+ * ===================================================================== */
+html[data-skin="obs"] .systemDock{
+  width: max-content;
+  max-width: min(520px, 50%);
+}
+@media (max-width: 1360px) {
+  html[data-skin="obs"] .dockTitle{ font-size: clamp(15px, 1.55vw, 21px); }
+  html[data-skin="obs"] .systemDock{ max-width: min(480px, 52%); }
+}
+
+/* 选项卡方块垂直对齐：115% 缩放下固定 17px + 上内边距会偏高约 1.6px，
+   改为整行 align-items:center、方块去 margin/padding 后内部居中。 */
+html[data-skin="obs"] .qzOpt{ align-items: center; }
+html[data-skin="obs"] .qzOpt .qn{
+  height: 18px;
+  min-width: 18px;
+  flex: 0 0 18px;
+  margin-top: 0;
+  padding-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border: 1px solid var(--line2);
+  border-radius: 0;
+}
+
+/* 品牌区统一：横版徽标占 84x60，品牌文字相应收一档，保证 264px 侧栏内不挤压 */
+html[data-skin="obs"] .brand{ padding: 16px 14px 14px 16px; gap: 10px; }
+html[data-skin="obs"] .brandMark{
+  width: 84px;
+  height: 60px;
+  flex: 0 0 84px;
+}
+html[data-skin="obs"] .brandMark svg,
+html[data-skin="obs"] .brandMark img{
+  width: 84px;
+  height: 60px;
+  display: block;
+  object-fit: contain;
+}
+html[data-skin="obs"] .brand .t{ font-size: 15.5px; letter-spacing: .1em; }
+html[data-skin="obs"] .brand .t .tzh{ font-size: 13.5px; letter-spacing: .14em; }
+html[data-skin="obs"] .brand .s{ font-size: 8px; letter-spacing: .16em; }
+
+/* ===== v1.7.1 首页布局修正 =====
+ * 窄窗口下分区标签（.partTag）会与任务简报的按钮区重叠；
+ * 该标签的信息与左下角 PART_INDEX 图例重复，故在 ≤1400px 隐藏，避免文字互相压叠。 */
+@media (max-width: 1400px) {
+  html[data-skin="obs"] .partTag { display: none; }
+}
+
+/* 首页分区标签（.partTag）与左下角 PART_INDEX 图例重复，窄窗口下还会压到任务简报按钮区，
+ * 统一不显示；星图的分区表达交给 .partField / .partDivider。 */
+html[data-skin="obs"] .partTag{ display: none; }
+
+/* ===== 打印一致性补丁 =====
+ * MAT 的公式卡（.chFormulaCard）默认深底，打印时统一转白底细线框；
+ * CSC 的章节大数字水印（.chWatermark）在纸面上只是一圈灰线，打印时隐藏。 */
+@media print {
+  html[data-skin="obs"] .chFormulaCard{
+    background: #fff !important;
+    border: 1px solid #bbb !important;
+    box-shadow: none !important;
+  }
+  html[data-skin="obs"] .chWatermark{
+    display: none !important;
+  }
+}
+
+/* =====================================================================
+ * 动效层（配合 assets/motion.js）
+ * · 主按钮 / 幽灵按钮：hover 时一道高光斜扫
+ * · 答题反馈：正确选项绿色光环扩散，错选水平抖动
+ * ===================================================================== */
+
+html[data-skin="obs"] .btnPrimary,
+html[data-skin="obs"] .btnGhost{
+  position: relative;
+  overflow: hidden;
+}
+html[data-skin="obs"] .btnPrimary::after,
+html[data-skin="obs"] .btnGhost::after{
+  content: "";
+  position: absolute;
+  top: -60%;
+  bottom: -60%;
+  left: -70%;
+  width: 42%;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.26), transparent);
+  transform: skewX(-16deg);
+  opacity: 0;
+}
+html[data-skin="obs"] .btnPrimary:hover::after,
+html[data-skin="obs"] .btnGhost:hover::after,
+html[data-skin="obs"] .btnPrimary:focus-visible::after,
+html[data-skin="obs"] .btnGhost:focus-visible::after{
+  animation: btnSheen .62s var(--ease);
+}
+@keyframes btnSheen{
+  0% { left: -70%; opacity: 0; }
+  18% { opacity: 1; }
+  100% { left: 130%; opacity: 0; }
+}
+
+html[data-skin="obs"] .qzOpt.ok{ animation: qzOkPulse .55s var(--ease); }
+html[data-skin="obs"] .qzOpt.bad{ animation: qzBadShake .42s var(--ease); }
+@keyframes qzOkPulse{
+  0% { box-shadow: 0 0 0 0 rgba(53, 208, 127, .55); }
+  100% { box-shadow: 0 0 0 9px rgba(53, 208, 127, 0); }
+}
+@keyframes qzBadShake{
+  0%, 100% { transform: translateX(0); }
+  18% { transform: translateX(-3px); }
+  38% { transform: translateX(3px); }
+  58% { transform: translateX(-2px); }
+  78% { transform: translateX(2px); }
+}
+
+@media (prefers-reduced-motion: reduce){
+  html[data-skin="obs"] .btnPrimary::after,
+  html[data-skin="obs"] .btnGhost::after{ display: none; }
+  html[data-skin="obs"] .qzOpt.ok,
+  html[data-skin="obs"] .qzOpt.bad{ animation: none; }
+}
+
+/* =====================================================================
+ * 右侧「本章目录」加宽 + 长标题换行完整展示
+ * 原来 224px 下中文长标题会被省略号截断（实测 5 条），加宽到 262px 并允许换行
+ * ===================================================================== */
+html[data-skin="obs"]{
+  --rail-w: 262px;
+}
+html[data-skin="obs"] .railLink{
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  text-overflow: clip;
+  overflow: visible;
+}
