@@ -9,7 +9,7 @@
  *   - activate 清掉所有旧版本缓存；页面侧检测到新 SW 会提示刷新。
  * 只处理同源 GET；file:// 双击打开时浏览器不注册 SW，本来就地离线可用。
  * ===================================================================== */
-const VERSION = 'la-20261122n2';
+const VERSION = 'la-20261122n3';
 const CORE = [
   './index.html',
   './manifest.webmanifest',
