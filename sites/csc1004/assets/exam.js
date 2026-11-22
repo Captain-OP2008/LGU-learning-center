@@ -262,7 +262,7 @@
       info.appendChild(infoItem('Last score', last ? String(last.score) + ' / ' + String(last.total) : '—'));
       card.appendChild(info);
       var introP = el('div', { class: 'blockP' });
-      introP.innerHTML = exam.summary || '';
+      introP.innerHTML = fmtMd(exam.summary || '');
       card.appendChild(introP);
       var actions = el('div', { class: 'qzActions' });
       var go = el('button', { class: 'qzBtn', type: 'button', text: '进入试卷' });
@@ -367,7 +367,7 @@
     cover.appendChild(info);
     if (exam.instructions && exam.instructions.length) {
       var ul = el('ol');
-      exam.instructions.forEach(function (t) { ul.appendChild(el('li', { html: t })); });
+      exam.instructions.forEach(function (t) { ul.appendChild(el('li', { html: fmtMd(t) })); });
       var note = el('div', { class: 'callout note' }, [
         el('div', { class: 'ct', html: icon('book') + '<span>Instructions</span>' }),
         el('div', { class: 'cb' })
@@ -571,7 +571,7 @@
     var key = q.no + '-' + pi;
     var wrap = el('div');
     var prompt = el('div', { class: 'qzStem' });
-    prompt.innerHTML = (part.label ? '<b>' + esc(part.label) + '</b> ' : '') + (part.prompt || '');
+    prompt.innerHTML = (part.label ? '<b>' + esc(part.label) + '</b> ' : '') + fmtMd(part.prompt || '');
     wrap.appendChild(prompt);
     if (part.code) wrap.appendChild(codeBox(part.code, part.codeTitle || 'Java'));
 
@@ -752,11 +752,11 @@
         html: (full ? icon('check') : icon('x')) + '<span>' + (part.label ? esc(part.label) + ' · ' : '') + score + ' / ' + part.points + ' 分</span>'
       }));
       var bd = el('div', { class: 'qzFbBody' });
-      if (part.prompt) bd.appendChild(el('div', { html: part.prompt }));
+      if (part.prompt) bd.appendChild(el('div', { html: fmtMd(part.prompt) }));
       if (part.code) bd.appendChild(codeBox(part.code, part.codeTitle || 'Java'));
       bd.appendChild(el('div', { class: 'ansLine', text: '你的答案：' + respDisplay(part, resp) }));
       bd.appendChild(el('div', { class: 'ansLine', html: '参考答案：<b>' + esc(answerDisplay(part)).replace(/\n/g, '<br>') + '</b>' }));
-      if (part.explain) bd.appendChild(el('div', { html: part.explain }));
+      if (part.explain) bd.appendChild(el('div', { html: fmtMd(part.explain) }));
       fb.appendChild(bd);
       card.appendChild(fb);
     });

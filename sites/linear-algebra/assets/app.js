@@ -14,7 +14,7 @@
 
   var VERSION = '1.0.0';
   /* 构建批次：改过任何静态资源后 +1，用于让浏览器缓存失效（与 index.html 中的 ?v= 保持一致） */
-  var BUILD = '20261122n3';
+  var BUILD = '20261122n4';
   /* 站点身份：data/site.js 在本脚本之前加载，向 window.CSC_SITE 提供本站 id、名称与全部文案 */
   var SITE = window.CSC_SITE || {};
   var SITE_ID = SITE.id || 'la';
@@ -3374,7 +3374,7 @@
           ]));
         }
         countEl.textContent = shown + ' / ' + items.length + ' ENTRIES';
-        if (window.CSC_MATH) window.CSC_MATH.schedule(host);
+        if (window.CSC_MATH) window.CSC_MATH.schedule(root);
       }
       render();
       input.addEventListener('input', debounce(render, 140));

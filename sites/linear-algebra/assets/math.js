@@ -117,7 +117,9 @@
     if (!root) return false;
     if (root.querySelector && root.querySelector('.chFormulaCard, .eqPlate, .mathBlock, mjx-container')) return true;
     var txt = root.textContent || '';
-    return txt.indexOf('$$') >= 0 || txt.indexOf('\\(') >= 0 || txt.indexOf('\\[') >= 0;
+    if (txt.indexOf('$$') >= 0 || txt.indexOf('\\(') >= 0 || txt.indexOf('\\[') >= 0) return true;
+    /* 单 $ 行内公式（题库 / 模拟卷用 $…$ 写法）：成对出现才算，避免把单个美元符号当公式 */
+    return /\$[^$\n]{1,240}\$/.test(txt);
   }
 
   /** 首次需要排版公式时注入 tex-svg.js（2.1 MB，不在首屏加载） */
