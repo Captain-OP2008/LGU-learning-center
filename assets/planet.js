@@ -988,13 +988,13 @@
     var t = env.time;
     var hot = env.hot;
 
-    /* ---- 1 · 外层大气辉光 ---- */
-    var ga = ctx.createRadialGradient(x, y, r * 0.92, x, y, r * (hot ? 3.6 : 2.7));
+    /* ---- 1 · 外层大气辉光（尺寸固定，悬停不扩散） ---- */
+    var ga = ctx.createRadialGradient(x, y, r * 0.92, x, y, r * 2.7);
     ga.addColorStop(0, p.atmo);
     ga.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = ga;
     ctx.beginPath();
-    ctx.arc(x, y, r * (hot ? 3.6 : 2.7), 0, TAU);
+    ctx.arc(x, y, r * 2.7, 0, TAU);
     ctx.fill();
 
     /* ---- 2 · 环 / 卫星（后半） ---- */

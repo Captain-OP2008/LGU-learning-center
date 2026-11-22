@@ -5,7 +5,7 @@
  *   · 透视椭圆轨道（统一倾角与压扁，真实太阳系近似共面）
  *   · 星系遮挡：行星没入太阳圆盘的部分被真实裁掉，边缘柔和渐隐；
  *     行星之间也按远近相互遮挡，交界处同样做柔化，避免一帧硬切
- *   · 行星本体（朝太阳受光）、拖尾、光晕、悬停放大
+ *   · 行星本体（朝太阳受光）、拖尾、光晕；悬停只高亮、不放大，选中才放大
  *   · 星尘粒子场
  *   · 命中测试（供 hub.js 做鼠标交互）
  * ===================================================================== */
@@ -204,8 +204,7 @@
     var pos = this._pos[i];
     if (!p || !pos) return;
     var ctx = this.ctx;
-    var hot = (s.hover === i || s.active === i);
-    var base = this.R * p.size * (hot ? 1.75 : 1);
+    var base = this.R * p.size * (s.active === i ? 1.75 : 1);
     var r = base * 1.55 + 6;
     var x = pos.x + ox;
     var y = pos.y + oy;
@@ -234,12 +233,12 @@
     var pos = this._pos[order[k]];
     var cur = order[k];
     var r0 = this.R * this.planets[cur].size *
-             (s.hover === cur || s.active === cur ? 1.75 : 1);
+             (s.active === cur ? 1.75 : 1);
     for (var j = k + 1; j < order.length; j++) {
       var idx = order[j];
       var np = this._pos[idx];
       var nr = this.R * this.planets[idx].size *
-               (s.hover === idx || s.active === idx ? 1.75 : 1);
+               (s.active === idx ? 1.75 : 1);
       var dx = np.x - pos.x;
       var dy = np.y - pos.y;
       var reach = (r0 + nr) * 1.22 + 6;
@@ -433,7 +432,7 @@
       ctx.globalAlpha = 1;
     }
 
-    var r = base * (hot ? 1.75 : 1);
+    var r = base * (s.active === i ? 1.75 : 1);
     var lightAng = Math.atan2(this.cy - y, this.cx - x);
 
     /* 交给 planet.js：程序化贴图 + 受光 + 大气散射 + 环带 + 卫星 */
