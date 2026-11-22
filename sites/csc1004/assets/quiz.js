@@ -18,6 +18,15 @@
   var icon = CSC.icon;
   var LETTERS = 'ABCDEFGH'.split('');
 
+  /* 行内标记：`code` → <code>，**bold** → <b>（深色主题里 code 由 CSS 着绿色） */
+  function fmtMd(s) {
+    if (s == null) return '';
+    s = String(s);
+    if (s.indexOf('`') < 0 && s.indexOf('**') < 0) return s;
+    return s.replace(/`([^`\n]{1,200})`/g, '<code>$1</code>')
+      .replace(/\*\*([^*<>\n]{1,80})\*\*/g, '<b>$1</b>');
+  }
+
   /* ------------------------------------------------------------------ 注册表 */
   var items = [];                 // 题目数组，顺序 = 注册顺序
   var byIdMap = Object.create(null);
@@ -187,7 +196,7 @@
   }
 
   function answerHtml(q) {
-    return esc(answerText(q)).replace(/\n/g, '<br>');
+    return fmtMd(esc(answerText(q))).replace(/\n/g, '<br>');
   }
 
   /** 用户作答的展示文本 */
@@ -296,7 +305,7 @@
     var hintShown = false;
     var hintNode = null;
 
-    body.appendChild(el('div', { class: 'qzStem', html: q.stem || '' }));
+    body.appendChild(el('div', { class: 'qzStem', html: fmtMd(q.stem || '') }));
     if (q.code) body.appendChild(codeBox(q.code, q.codeTitle || 'Java'));
     if (q.stdin) body.appendChild(el('div', { class: 'qzCode', text: '$ stdin\n' + q.stdin }));
 
@@ -309,7 +318,7 @@
         if (!hintNode) {
           hintNode = el('div', { class: 'callout note' }, [
             el('div', { class: 'ct', html: icon('lightbulb') + '<span>提示</span>' }),
-            el('div', { class: 'cb', html: q.hint })
+            el('div', { class: 'cb', html: fmtMd(q.hint) })
           ]);
           body.insertBefore(hintNode, actions);
         }
@@ -357,7 +366,7 @@
       (q.options || []).forEach(function (opt, i) {
         var b = el('button', { class: 'qzOpt', type: 'button' }, [
           el('span', { class: 'qn', text: LETTERS[i] }),
-          el('span', { class: 'qo', html: opt.text })
+          el('span', { class: 'qo', html: fmtMd(opt.text) })
         ]);
         b.addEventListener('click', function () {
           if (state.done) return;
@@ -462,7 +471,7 @@
       (q.options || []).forEach(function (opt, i) {
         var b = el('button', { class: 'qzOpt', type: 'button' }, [
           el('span', { class: 'qn', text: LETTERS[i] }),
-          el('span', { class: 'qo', html: opt.text })
+          el('span', { class: 'qo', html: fmtMd(opt.text) })
         ]);
         b.addEventListener('click', function () {
           if (state.done) return;
@@ -539,7 +548,7 @@
         var head = el('div', { class: 'qzFbHead', html: icon('book') + '<span>参考答案</span>' });
         var bd = el('div', { class: 'qzFbBody' });
         if (sol) bd.appendChild(codeBox(sol, '参考实现'));
-        bd.appendChild(el('div', { html: q.explain || '' }));
+        bd.appendChild(el('div', { html: fmtMd(q.explain || '') }));
         out.appendChild(head); out.appendChild(bd);
       }
 
@@ -604,7 +613,7 @@
             bd.appendChild(el('div', { class: 'ansLine', text: '实际输出：' + normLines(r.actual) }));
           }
         });
-        if (q.explain) bd.appendChild(el('div', { html: q.explain }));
+        if (q.explain) bd.appendChild(el('div', { html: fmtMd(q.explain) }));
         out.appendChild(head); out.appendChild(bd);
         if (allOk) { ta.disabled = true; runBtn.disabled = true; finish(true, ta.value, false); }
       });
@@ -677,14 +686,14 @@
       html: (ok ? icon('check') : icon('x')) + '<span>' + (ok ? '答对了' : '答错了') + '</span>'
     }));
     var bd = el('div', { class: 'qzFbBody' });
-    if (!ok) bd.appendChild(el('div', { class: 'ansLine', text: '你的答案：' + respText(q, resp, picked) }));
+    if (!ok) bd.appendChild(el('div', { class: 'ansLine', html: fmtMd(esc('你的答案：' + respText(q, resp, picked))) }));
     bd.appendChild(el('div', { class: 'ansLine', html: '正确答案：<b>' + answerHtml(q) + '</b>' }));
     if (q.mode === 'findbug' && detail && detail.hits) {
       bd.appendChild(el('div', { class: 'ansLine', html: '<b>关键点命中：' + detail.got + ' / ' + detail.total + (detail.need < detail.total ? '（需 ≥ ' + detail.need + '）' : '') + '</b>' }));
       (q.accept || []).forEach(function (item, i) {
         bd.appendChild(el('div', {
           class: 'ansLine',
-          html: (detail.hits[i] ? '✅ ' : '❌ ') + esc((item && item.hint) || '关键点 ' + (i + 1))
+          html: (detail.hits[i] ? '✅ ' : '❌ ') + fmtMd(esc((item && item.hint) || '关键点 ' + (i + 1)))
         }));
       });
       if (q.fix) bd.appendChild(codeBox(q.fix, '修改后（参考）'));
@@ -693,7 +702,7 @@
       var sol = codeSolution(q);
       if (sol) bd.appendChild(codeBox(sol, '参考实现'));
     }
-    bd.appendChild(el('div', { html: q.explain || '（暂无解析）' }));
+    bd.appendChild(el('div', { html: fmtMd(q.explain || '（暂无解析）') }));
     fb.appendChild(bd);
     return fb;
   }

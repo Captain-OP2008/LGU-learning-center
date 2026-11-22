@@ -16,6 +16,15 @@
   var esc = CSC.escapeHtml;
   var icon = CSC.icon;
   var LETTERS = 'ABCDEFGH'.split('');
+
+  /* 行内标记：`code` → <code>，**bold** → <b>（深色主题里 code 由 CSS 着绿色） */
+  function fmtMd(s) {
+    if (s == null) return '';
+    s = String(s);
+    if (s.indexOf('`') < 0 && s.indexOf('**') < 0) return s;
+    return s.replace(/`([^`\n]{1,200})`/g, '<code>$1</code>')
+      .replace(/\*\*([^*<>\n]{1,80})\*\*/g, '<b>$1</b>');
+  }
   var LS_ATTEMPT = 'exam.attempt.';
   var LS_RESULT = 'exam.result.';
   var LS_HISTORY = 'exam.history';
@@ -540,7 +549,7 @@
       el('span', { class: 'exQType', text: typeName(q) })
     ]);
     card.appendChild(head);
-    if (q.intro) card.appendChild(el('div', { class: 'qzStem', html: q.intro }));
+    if (q.intro) card.appendChild(el('div', { class: 'qzStem', html: fmtMd(q.intro) }));
     if (q.code) card.appendChild(codeBox(q.code, q.codeTitle || ('Q' + q.no)));
     (q.parts || []).forEach(function (part, pi) {
       card.appendChild(partBlock(q, part, pi, att, onChange));
@@ -573,7 +582,7 @@
       (part.options || []).forEach(function (opt, i) {
         var b = el('button', { class: 'qzOpt', type: 'button' }, [
           el('span', { class: 'qn', text: LETTERS[i] }),
-          el('span', { class: 'qo', html: opt.text })
+          el('span', { class: 'qo', html: fmtMd(opt.text) })
         ]);
         if (att.answers[key] === i) b.classList.add('sel');
         b.addEventListener('click', function () {
@@ -729,7 +738,7 @@
       el('span', { class: 'exQType', text: typeName(q) })
     ]);
     card.appendChild(head);
-    if (q.intro) card.appendChild(el('div', { class: 'qzStem', html: q.intro }));
+    if (q.intro) card.appendChild(el('div', { class: 'qzStem', html: fmtMd(q.intro) }));
     if (q.code) card.appendChild(codeBox(q.code, q.codeTitle || ('Q' + q.no)));
     (q.parts || []).forEach(function (part, pi) {
       var dp = null;

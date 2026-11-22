@@ -4403,6 +4403,18 @@ html[data-skin="obs"] .qzFbBody code{
   font-family: var(--mono);
 }
 
+/* 题干/解析/选项里的行内代码：绿色加粗，与正文的强调色区分（含 .content 的 :not 变体以压过正文行内代码色） */
+html[data-skin="obs"] .content .qzStem code:not([class]),
+html[data-skin="obs"] .content .qzFbBody code:not([class]),
+html[data-skin="obs"] .content .qzOpt code:not([class]),
+html[data-skin="obs"] .qzStem code,
+html[data-skin="obs"] .qzFbBody code,
+html[data-skin="obs"] .qzOpt code,
+html[data-skin="obs"] .ansLine code{
+  color: #8fe0a8;
+  font-weight: 600;
+}
+
 html[data-skin="obs"] .qzProgress, html[data-skin="obs"] .qzProgBar, html[data-skin="obs"] .qzDone, html[data-skin="obs"] .qzStreak{
   font-family: var(--mono);
   font-size: 9.5px;

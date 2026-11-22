@@ -12,7 +12,7 @@
 
   var VERSION = '2.0.0';
   /* 构建批次：改过任何静态资源后 +1，用于让浏览器缓存失效（与 index.html 中的 ?v= 保持一致） */
-  var BUILD = '20261122n1';
+  var BUILD = '20261122n2';
   var SITE_ID = (window.CSC_SITE && window.CSC_SITE.id) || 'c';
   var LS = 'csc.' + SITE_ID + '.';
 
