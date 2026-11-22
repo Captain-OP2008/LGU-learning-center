@@ -2471,6 +2471,81 @@ html[data-skin="obs"] .chapter{
   position: relative;
 }
 
+/* 章节视觉影像：assets/img/<chId>.webp 存在时才出现，像一帧观测影像 */
+html[data-skin="obs"] .chHero{
+  position: relative;
+  margin: 0 0 38px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+  background: #0a0f18;
+}
+
+html[data-skin="obs"] .chHero img{
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1200 / 340;
+  object-fit: cover;
+}
+
+html[data-skin="obs"] .chHero::before{
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--const-orange);
+  opacity: .55;
+  z-index: 2;
+}
+
+html[data-skin="obs"] .chHero::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(8, 12, 20, 0) 52%, rgba(8, 12, 20, .74) 100%);
+  pointer-events: none;
+}
+
+html[data-skin="obs"] .chHero figcaption{
+  position: absolute;
+  left: 17px;
+  right: 15px;
+  bottom: 11px;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+
+html[data-skin="obs"] .chHero figcaption b{
+  font-weight: 400;
+  color: var(--const-orange);
+}
+
+html[data-skin="obs"] .chHero figcaption span{
+  color: var(--text2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html[data-skin="obs"] .chHero figcaption em{
+  margin-left: auto;
+  font-style: normal;
+  color: var(--text-dim);
+  opacity: .75;
+  white-space: nowrap;
+}
+
 html[data-skin="obs"] .chHead{
   position: relative;
   margin: 0 0 40px;

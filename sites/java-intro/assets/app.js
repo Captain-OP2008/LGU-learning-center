@@ -12,7 +12,7 @@
 
   var VERSION = '1.7.9';
   /* 构建批次：改过任何静态资源后 +1，用于让浏览器缓存失效（与 index.html 中的 ?v= 保持一致） */
-  var BUILD = '20261121n8';
+  var BUILD = '20261122n1';
 
   /* ------------------------------------------------------------------ 站点配置 */
   var SITE = window.CSC_SITE || {};
@@ -1731,6 +1731,18 @@
         head.appendChild(goals);
       }
       wrap.appendChild(head);
+      // 章节视觉影像（可选：assets/img/<chId>.webp 存在时才显示）
+      (function () {
+        var fig = el('figure', { class: 'chHero' });
+        var img = el('img', { src: 'assets/img/' + id + '.webp', alt: '', loading: 'lazy', decoding: 'async' });
+        img.addEventListener('error', function () { fig.remove(); });
+        fig.appendChild(img);
+        fig.appendChild(el('figcaption', {
+          html: '<b>IMG.' + String(ch.num).padStart(2, '0') + '</b><span>// ' + esc(ch.en || '') + '</span><em>VISUAL REFERENCE</em>'
+        }));
+        wrap.appendChild(fig);
+      })();
+
 
 
       // 正文

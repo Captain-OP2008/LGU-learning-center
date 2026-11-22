@@ -12,7 +12,7 @@
 
   var VERSION = '20261112p1';
   /* 构建批次：与 index.html / sw.js 的版本号保持一致，改过静态资源后一起更新，用于让缓存失效 */
-  var BUILD = '20261121n8';
+  var BUILD = '20261122n1';
 
   /* ------------------------------------------------------------------ 站点身份 */
   /* data/site.js 在 assets/app.js 之前加载；六站共用一套框架，这里读取本站身份与文案。 */
@@ -1825,6 +1825,18 @@
         head.appendChild(goals);
       }
       wrap.appendChild(head);
+      // 章节视觉影像（可选：assets/img/<chId>.webp 存在时才显示）
+      (function () {
+        var fig = el('figure', { class: 'chHero' });
+        var img = el('img', { src: 'assets/img/' + id + '.webp', alt: '', loading: 'lazy', decoding: 'async' });
+        img.addEventListener('error', function () { fig.remove(); });
+        fig.appendChild(img);
+        fig.appendChild(el('figcaption', {
+          html: '<b>IMG.' + String(ch.num).padStart(2, '0') + '</b><span>// ' + esc(ch.en || '') + '</span><em>VISUAL REFERENCE</em>'
+        }));
+        wrap.appendChild(fig);
+      })();
+
 
       /* 本章若所有代码块都标记 run:false，明确提示需要本地环境运行（§7） */
       var codeStats = { total: 0, runnable: 0 };

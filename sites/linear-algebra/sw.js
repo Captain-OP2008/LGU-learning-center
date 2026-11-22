@@ -3,13 +3,13 @@
  * 策略：网络优先（network-first）+ 缓存兜底。
  *   - 同源 GET 一律先请求网络，成功后顺手更新缓存；
  *   - 网络失败时用 caches.match(..., {ignoreSearch:true}) 兜底，
- *     这样 data/ch01.js?v=20261112p1 也能命中缓存里的 data/ch01.js；
+ *     这样 data/ch01.js?v=20261122n1 也能命中缓存里的 data/ch01.js；
  *   - 只有页面导航（request.mode === 'navigate'）才回退到 index.html，
  *     缺图 / 缺脚本时不会把 HTML 当成 JS 返回；
  *   - activate 清掉所有旧版本缓存；页面侧检测到新 SW 会提示刷新。
  * 只处理同源 GET；file:// 双击打开时浏览器不注册 SW，本来就地离线可用。
  * ===================================================================== */
-const VERSION = 'la-20261121n8';
+const VERSION = 'la-20261122n1';
 const CORE = [
   './index.html',
   './manifest.webmanifest',
