@@ -23,7 +23,7 @@ for (const dir of CORE_SITES) {
 const ALL_SITES = COURSES
   .filter(c => fs.existsSync(path.join(ROOT, 'sites', c.dir, 'index.html')))
   .map(c => c.dir);
-const STAMP = '20261122n4';
+const STAMP = '20261123n1';
 
 const problems = [];
 const add = (f, m) => problems.push(`${f} :: ${m}`);
