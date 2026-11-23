@@ -63,6 +63,7 @@ node _serve.js        # → http://127.0.0.1:8811/
 ├── index.html              门户：星空首页
 ├── courses.html            全部课程目录 + 搜索
 ├── 使用说明.md              面向使用者的完整手册
+├── AI协作日志.md            AI 协作过程记录（5 轮迭代）
 ├── assets/                 门户样式、交互、跨课搜索索引
 ├── shared/                 公共样式、字体、图标、MathJax
 ├── sites/                  66 个课程站（每站可独立打开、独立离线）
@@ -206,6 +207,7 @@ node _serve.js        # → http://127.0.0.1:8811/
 ├── index.html              Portal: the starfield home page
 ├── courses.html            Full course catalog + search
 ├── 使用说明.md              Complete user manual
+├── AI协作日志.md            AI collaboration log (5 iterations)
 ├── assets/                 Portal styles, interactions, cross-course search index
 ├── shared/                 Shared styles, fonts, icons, MathJax
 ├── sites/                  66 course sites (each opens and works offline on its own)
